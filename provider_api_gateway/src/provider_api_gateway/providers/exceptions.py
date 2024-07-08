@@ -1,0 +1,2 @@
+class ReplicateClientError(Exception):
+    pass
