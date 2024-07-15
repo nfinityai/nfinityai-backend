@@ -1,16 +1,14 @@
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROVIDER_REPLICATE_API_KEY: str
-    PROVIDER_REPLICATE_RETRY_ATTEMPTS: int = 3
+    model_config = SettingsConfigDict()
 
-    class Config:
-        env_file = ".env"
+    replicate_api_key: str
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # type: ignore
