@@ -11,18 +11,7 @@ services:
       - BACKEND_API_JWT_SECRET=${BACKEND_API_JWT_SECRET}
       - BACKEND_API_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
       - BACKEND_API_TASK_MANAGER_URL=http://task_manager_api:8000
-    depends_on:
-      - task_manager_api
-  task_manager_api:
-    build:
-      context: task_manager_api/
-      dockerfile: docker/Dockerfile
-    environment:
-      - TASK_MANAGER_PROVIDER_API_GATEWAY_URL=http://provider_api_gateway:8000
-    ports:
-      - "${TASK_MANAGER_API_GATEWAY_PORT:-8001}:8000"
-    depends_on:
-      - provider_api_gateway
+      - BACKEND_API_PROVIDER_API_GATEWAY_URL=http://provider_api_gateway:8000
   provider_api_gateway:
     build:
       context: provider_api_gateway/
