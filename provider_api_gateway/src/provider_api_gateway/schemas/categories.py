@@ -14,3 +14,8 @@ class Category(BaseModel):
     @classmethod
     def from_provider_model(cls, provider: ProviderEnum, model: BaseModel) -> "Category":
         return cls(provider=provider, **model.model_dump())
+
+
+
+class CategoriesList(BaseModel):
+    categories: list[Category]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from .endpoints import replicate
+from .endpoints import providers
 
 api_router = APIRouter()
 api_router.include_router(
-    replicate.router, prefix="/replicate", tags=["Replicate Endpoints"]
+    providers.router, prefix="/providers", tags=["Providers Endpoints"]
 )

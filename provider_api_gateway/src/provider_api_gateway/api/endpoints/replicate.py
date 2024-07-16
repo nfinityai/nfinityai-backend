@@ -14,18 +14,6 @@ class RunModelQuery(BaseModel):
     input: dict
 
 
-@router.get("/collections")
-async def list_collections(
-    client: Annotated[ReplicateClient, Depends(get_replicate_client)],
-):
-    try:
-        collections = await client.list_collections()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return [collection.dict() for collection in collections]
-
-
 @router.get("/collections/{collection}/models")
 async def list_models(
     collection: str,

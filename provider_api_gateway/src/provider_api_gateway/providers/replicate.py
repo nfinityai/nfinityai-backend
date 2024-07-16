@@ -8,15 +8,19 @@ import replicate
 
 from provider_api_gateway.config import Settings, get_settings
 from provider_api_gateway.providers.base import BaseProvider
+from provider_api_gateway.schemas.types import ProviderEnum
+from provider_api_gateway.schemas.categories import Category
 
 
 class ReplicateClient(BaseProvider, Client):
-    async def list_collections(self) -> list[Collection]:
-        collections = []
+    PROVIDER_ID = ProviderEnum.REPLICATE
+
+    async def list_categories(self) -> list[Category]:
+        categories = []
         async for page in async_paginate(self.collections.async_list):
             for collection in page:
-                collections.append(collection)
-        return collections
+                categories.append(Category(provider=ReplicateClient.PROVIDER_ID, **collection.dict()))
+        return categories
 
     async def list_models(self, collection_slug: str) -> list[Model]:
         models = self.collections.get(collection_slug).models
