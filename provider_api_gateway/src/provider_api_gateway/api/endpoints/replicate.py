@@ -27,7 +27,7 @@ async def list_models(
     return models
 
 
-@router.post("/models/{model}")
+@router.post("/models/{model}/run")
 async def run_model(
     model: str,
     run_query: RunModelQuery,
@@ -42,3 +42,18 @@ async def run_model(
     return models
 
 
+@router.post("/models/{model}/run_async")
+async def run_model_async(
+    model: str,
+    run_query: RunModelQuery,
+    client: Annotated[ReplicateClient, Depends(get_replicate_client)],
+    version: str | None = None,
+):
+    try:
+        models = await client.run_model_async(
+            model, version, input_params=run_query.input
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return models

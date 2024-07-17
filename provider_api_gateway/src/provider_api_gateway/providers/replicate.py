@@ -1,12 +1,15 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 import replicate
 from fastapi import Depends
 from replicate import async_paginate
 from replicate.client import Client
+from replicate.version import Version
+from replicate.model import Model
 
 from provider_api_gateway.config import Settings, get_settings
 from provider_api_gateway.providers.base import BaseProvider
+from provider_api_gateway.providers.exceptions import ReplicateClientError
 from provider_api_gateway.schemas.categories import ProviderModelCategory
 from provider_api_gateway.schemas.models import ProviderModel
 from provider_api_gateway.schemas.types import ProviderEnum
@@ -57,8 +60,27 @@ class ReplicateClient(BaseProvider, Client):
         return output
     
     @measured
-    async def _run_model(self, ref, input, **kwargs):
-        return await replicate.async_run(ref, input=input, **kwargs)
+    async def _run_model(self, ref: Any, input: dict, **kwargs):
+        return await self.async_run(ref, input=input, **kwargs)
+    
+    async def run_model_async(self, model_slug: str, model_version: str | None, input_params: dict):
+        """Run a model from the Replicate provider."""
+        model = self.models.get(decode_string(model_slug))
+        if model_version is not None:
+            version = model.versions.get(model_version)
+        logger.info("Running model (async)", model=model, version=version, input=input_params)
+        result = await self._run_model_async(ref=model if model_version is None else version, input=input_params)
+        output, execution_time = result   # type: ignore
+        logger.info("Model started", model=model, execution_time=execution_time, output=output)
+        return output
+    
+    @measured
+    async def _run_model_async(self, ref: Any, input: dict, **kwargs):
+        if isinstance(ref, Version):
+            return await self.predictions.async_create(ref, input=input, **kwargs)
+        if isinstance(ref, Model):
+            return await self.models.predictions.async_create(ref, input=input, **kwargs)
+        raise ReplicateClientError("Invalid model reference")
 
 
 def get_replicate_client(
