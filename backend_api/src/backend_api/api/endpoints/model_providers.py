@@ -5,6 +5,8 @@ from backend_api.backend.config import Settings, get_settings
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList as ModelProviderCategorySchemaList,
     ModelProviderModelRunAsync,
+    ModelProviderModelRunAsyncResult,
+    ModelProviderModelRunAsyncStatus,
 )
 from backend_api.schemas.model_providers import (
     ModelProviderModelList as ModelProviderModelSchemaList,
@@ -69,14 +71,17 @@ async def run_model_async(
     )
 
 
-@router.post("/run/{id}/status", response_model=ModelProviderModelRunAsync)
-async def run_model_status(
-    model: str,
-    run_query: ModelRunQuery,
+@router.get("/runs/{run_id}/status", response_model=ModelProviderModelRunAsyncStatus)
+async def get_run_status(
+    run_id: str,
     model_provider_service: ModelProviderService = Depends(get_model_provider_service),
-    settings: Settings = Depends(get_settings),
-    version: str | None = None,
 ):
-    return await model_provider_service.run_model_async(
-        settings.provider, model, run_query.input, version
-    )
+    return await model_provider_service.run_model_async_status(run_id)
+
+
+@router.get("/runs/{run_id}/result", response_model=ModelProviderModelRunAsyncResult)
+async def get_run_result(
+    run_id: str,
+    model_provider_service: ModelProviderService = Depends(get_model_provider_service),
+):
+    return await model_provider_service.run_model_async_result(run_id)

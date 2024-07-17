@@ -14,6 +14,7 @@ from backend_api.schemas.model_providers import (
     ModelProviderModelList,
     ModelProviderModelRunAsync,
     ModelProviderModelRunAsyncResult,
+    ModelProviderModelRunAsyncStatus,
     ModelProviderModelRunResult,
 )
 
@@ -97,15 +98,15 @@ class ModelProviderService:
     
     async def run_model_async_status(
         self, job_id: str
-    ) -> ModelProviderModelRunAsyncResult:
-        url = self._build_url(f"/runs/{job_id}/result")
+    ) -> ModelProviderModelRunAsyncStatus:
+        url = self._build_url(f"/runs/{job_id}/status")
         async with self.client.get(url) as response:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing categories: {response=}")
                 raise ModelProviderException("Error while listing categories")
             data = await response.json()
 
-        return ModelProviderModelRunAsyncResult(**data)
+        return ModelProviderModelRunAsyncStatus(**data)
 
     async def run_model_async_result(
         self, job_id: str

@@ -50,6 +50,10 @@ class ModelProviderModelRunAsync(BaseModel):
     created_at: datetime | None
 
 
+class ModelProviderModelRunAsyncStatus(ModelProviderModelRunAsync):
+    pass
+
+
 class ModelProviderModelRunAsyncResult(ModelProviderModelRunAsync):
     result: ModelProviderModelRunResultModel
     finished_at: datetime | None
