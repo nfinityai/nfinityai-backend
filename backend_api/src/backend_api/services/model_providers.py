@@ -1,4 +1,5 @@
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import urlencode, urljoin
 
@@ -8,15 +9,17 @@ from fastapi import Depends
 from typing_extensions import Annotated
 
 from backend_api.backend.config import Settings, get_settings
-import time
-
-from backend_api.schemas.model_providers import ModelProviderCategoryList, ModelProviderModelList
+from backend_api.schemas.model_providers import (
+    ModelProviderCategoryList,
+    ModelProviderModelList,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class ModelProviderException(Exception):
     pass
+
 
 async def on_request_start(session, trace_config_ctx, params):
     trace_config_ctx.start = time.time()
@@ -62,28 +65,39 @@ class ModelProviderService:
             data = await response.json()
         return ModelProviderModelList(models=data)
 
-    async def run_model(self, provider: str, model: str, params: dict, version: str | None = None):
-        url = self._build_url(f"/providers/{provider}/models/{model}/run", version=version)
-        async with self.client.post(url, json={'input': params}) as response:
-            if response.status != HTTPStatus.OK:
-                logger.error(f"Error while listing models: {response=}")
-                raise ModelProviderException("Error while listing categories")
-            return await response.json()
-
-    async def run_model_async(self, provider: str, model: str, params: dict, version: str | None = None):
-        url = self._build_url(f"/providers/{provider}/models/{model}/run_async", version=version)
-        async with self.client.post(url, json={'input': params}) as response:
-            if response.status != HTTPStatus.OK:
-                logger.error(f"Error while listing models: {response=}")
-                raise ModelProviderException("Error while listing categories")
-            return await response.json()
-
-
-def get_retry_options(settings: Annotated[Settings, Depends(get_settings)]) -> aiohttp_retry.ExponentialRetry:
-    return aiohttp_retry.ExponentialRetry(
-            attempts=settings.provider_api_retry_attempts,
-            factor=settings.provider_api_factor,
+    async def run_model(
+        self, provider: str, model: str, params: dict, version: str | None = None
+    ):
+        url = self._build_url(
+            f"/providers/{provider}/models/{model}/run", version=version
         )
+        async with self.client.post(url, json={"input": params}) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing models: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            return await response.json()
+
+    async def run_model_async(
+        self, provider: str, model: str, params: dict, version: str | None = None
+    ):
+        url = self._build_url(
+            f"/providers/{provider}/models/{model}/run_async", version=version
+        )
+        async with self.client.post(url, json={"input": params}) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing models: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            return await response.json()
+
+
+def get_retry_options(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> aiohttp_retry.ExponentialRetry:
+    return aiohttp_retry.ExponentialRetry(
+        attempts=settings.provider_api_retry_attempts,
+        factor=settings.provider_api_factor,
+    )
+
 
 def get_trace_configs() -> list[aiohttp.TraceConfig]:
     trace_config = aiohttp.TraceConfig()
@@ -92,19 +106,25 @@ def get_trace_configs() -> list[aiohttp.TraceConfig]:
 
     return [trace_config]
 
-async def get_session(trace_configs: Annotated[list[aiohttp.TraceConfig], Depends(get_trace_configs)]) -> aiohttp.ClientSession:
+
+async def get_session(
+    trace_configs: Annotated[list[aiohttp.TraceConfig], Depends(get_trace_configs)],
+) -> aiohttp.ClientSession:
     return aiohttp.ClientSession(trace_configs=trace_configs)
 
+
 async def get_retry_client(
-        session: Annotated[aiohttp.ClientSession, Depends(get_session)],
-        retry_options: Annotated[aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)],
+    session: Annotated[aiohttp.ClientSession, Depends(get_session)],
+    retry_options: Annotated[
+        aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)
+    ],
 ) -> aiohttp_retry.RetryClient:
     return aiohttp_retry.RetryClient(client_session=session, retry=retry_options)
 
 
 async def get_model_provider_service(
-        settings: Annotated[Settings, Depends(get_settings)],
-        client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)]
+    settings: Annotated[Settings, Depends(get_settings)],
+    client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)],
 ):
     async with ModelProviderService(settings, client) as service:
         yield service
