@@ -9,3 +9,13 @@ class ProviderEnum(str, Enum):
 
     def capitalize(self):
         return self.value.capitalize()
+
+
+class ProviderRunStateEnum(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+    def __str__(self):
+        return self.value

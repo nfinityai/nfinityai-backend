@@ -7,6 +7,7 @@ from provider_api_gateway.providers.replicate import (
     get_replicate_client,
 )
 from provider_api_gateway.schemas.categories import ProviderModelCategoriesList
+from provider_api_gateway.schemas.runs import RunResult, RunStatus
 from provider_api_gateway.schemas.types import ProviderEnum
 
 router = APIRouter()
@@ -22,6 +23,32 @@ async def list_categories(
         raise HTTPException(status_code=500, detail=str(e))
 
     return ProviderModelCategoriesList(categories=categories)
+
+
+@router.post("/runs/{id}/status", response_model=RunStatus)
+async def get_run_status(
+    id: str,
+    client: Annotated[ReplicateClient, Depends(get_replicate_client)],
+):
+    try:
+        status = await client.get_run_model_status(id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return status
+
+
+@router.post("/runs/{id}/result", response_model=RunResult)
+async def get_run_result(
+    id: str,
+    client: Annotated[ReplicateClient, Depends(get_replicate_client)],
+):
+    try:
+        result = await client.get_run_model_result(id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return result
 
 
 router.include_router(
