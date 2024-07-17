@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing_extensions import Annotated
 
-from provider_api_gateway.api.endpoints import replicate
+from provider_api_gateway.api.endpoints.providers import router as providers_router
 from provider_api_gateway.providers.replicate import (
     ReplicateClient,
     get_replicate_client,
 )
 from provider_api_gateway.schemas.categories import ProviderModelCategoriesList
 from provider_api_gateway.schemas.runs import RunResult, RunStatus
-from provider_api_gateway.schemas.types import ProviderEnum
 
 router = APIRouter()
 
@@ -51,6 +50,4 @@ async def get_run_result(
     return result
 
 
-router.include_router(
-    replicate.router, prefix=f"/{ProviderEnum.REPLICATE}", tags=[f"{ProviderEnum.REPLICATE.capitalize()} Endpoints"]
-)
+router.include_router(providers_router, prefix="/providers", tags=["Provider Endpoints"])

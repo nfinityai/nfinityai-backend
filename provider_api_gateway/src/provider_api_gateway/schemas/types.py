@@ -6,9 +6,12 @@ class ProviderEnum(str, Enum):
 
     def __str__(self):
         return self.value
-
-    def capitalize(self):
-        return self.value.capitalize()
+    
+    def as_prefix(self):
+        return f"/{self.value}"
+    
+    def as_tag(self):
+        return f"{self.value.capitalize()} Endpoints"
 
 
 class ProviderRunStateEnum(str, Enum):

@@ -21,7 +21,7 @@ class ModelProviderService:
 
     async def list_categories(self):
         async with self.session.get(
-            self.api_url + "/replicate/collections"
+            self.api_url + "/providers/categories"
         ) as response:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing categories: {response=}")

@@ -5,6 +5,7 @@ class ModelProviderCategory(BaseModel):
     name: str
     slug: str
     description: str
+    provider: str
 
 
 class ModelProviderCategoryList(BaseModel):
