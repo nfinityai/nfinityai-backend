@@ -19,6 +19,7 @@ aiohttp-retry = "^2.8.3"
 pandas = "^2.2.2"
 replicate = "^0.28.0"
 structlog = "^24.2.0"
+beautifulsoup4 = "^4.12.3"
 
 
 [tool.poetry.group.dev.dependencies]
