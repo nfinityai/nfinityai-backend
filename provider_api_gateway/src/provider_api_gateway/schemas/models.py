@@ -1,7 +1,12 @@
 from typing import Any
 from pydantic import BaseModel, Field, computed_field
 
+from provider_api_gateway.services.extractors.replicate import (
+    CostInfoModel,
+    ReplicateModelCostExtractor,
+)
 from provider_api_gateway.utils import encode_string
+
 
 class ProviderModelDefaultExampleModel(BaseModel):
     input: dict | None
@@ -17,11 +22,6 @@ class ProviderModel(BaseModel):
     name: str
     """
     The name of the model.
-    """
-
-    url: str = Field(..., exclude=True)
-    """
-    The URL of the model.
     """
 
     description: str | None
@@ -54,7 +54,7 @@ class ProviderModel(BaseModel):
     def slug(self) -> str:
         slug = f"{self.owner}/{self.name}"
         return encode_string(slug)
-    
+
     @computed_field
     @property
     def version(self) -> str | None:
@@ -65,3 +65,12 @@ class ProviderModel(BaseModel):
 
 class ProviderModelList(BaseModel):
     models: list[ProviderModel]
+
+
+class ProviderModelCost(BaseModel):
+    url: str = Field(..., exclude=True)
+
+    @computed_field
+    @property
+    def info(self) -> CostInfoModel | None:
+        return ReplicateModelCostExtractor(self.url).get_run_time_and_cost()

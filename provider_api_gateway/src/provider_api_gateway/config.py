@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     replicate_api_token: str
 
+    replicate_hardware_pricing_url: str = 'https://replicate.com/pricing'
 
 @lru_cache
 def get_settings() -> Settings:

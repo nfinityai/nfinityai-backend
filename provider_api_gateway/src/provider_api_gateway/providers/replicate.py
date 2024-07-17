@@ -13,7 +13,7 @@ from provider_api_gateway.logging import get_logger
 from provider_api_gateway.providers.base import BaseProvider
 from provider_api_gateway.providers.exceptions import ReplicateClientError
 from provider_api_gateway.schemas.categories import ProviderModelCategory
-from provider_api_gateway.schemas.models import ProviderModel
+from provider_api_gateway.schemas.models import ProviderModel, ProviderModelCost
 from provider_api_gateway.schemas.runs import Run, RunResult, RunResultModel, RunStatus
 from provider_api_gateway.schemas.types import ProviderEnum
 from provider_api_gateway.utils import decode_string, measured
@@ -136,6 +136,18 @@ class ReplicateClient(BaseProvider, Client):
 
         # TODO: handle other states
         return RunResult(**prediction.dict())
+
+    # hardware specs
+
+    async def get_hardware_list(self):
+        return await self.hardware.async_list()
+
+
+    # cost info
+
+    async def get_model_cost_info(self, model_slug: str) -> ProviderModelCost:
+        model = await self.models.async_get(decode_string(model_slug))
+        return ProviderModelCost(url=model.url)
 
 
 def get_replicate_client(
