@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from .types import ProviderEnum
 
 
-class Category(BaseModel):
+class ProviderModelCategory(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
     name: str
@@ -12,10 +12,10 @@ class Category(BaseModel):
 
 
     @classmethod
-    def from_provider_model(cls, provider: ProviderEnum, model: BaseModel) -> "Category":
-        return cls(provider=provider, **model.model_dump())
+    def from_provider_model(cls, provider: ProviderEnum, model: BaseModel) -> "ProviderModelCategory":
+        return cls(provider=provider, **model.dict() if hasattr(model, "dict") else model.model_dump())
 
 
 
-class CategoriesList(BaseModel):
-    categories: list[Category]
+class ProviderModelCategoriesList(BaseModel):
+    categories: list[ProviderModelCategory]

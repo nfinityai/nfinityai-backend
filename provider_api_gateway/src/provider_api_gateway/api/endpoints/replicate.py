@@ -14,27 +14,28 @@ class RunModelQuery(BaseModel):
     input: dict
 
 
-@router.get("/collections/{collection}/models")
+@router.get("/categories/{category}/models")
 async def list_models(
-    collection: str,
+    category: str,
     client: Annotated[ReplicateClient, Depends(get_replicate_client)],
 ):
     try:
-        models = await client.list_models(collection)
+        models = await client.list_models(category)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     return models
 
 
-@router.post("/run/{model:path}")
+@router.post("/models/{model}")
 async def run_model(
     model: str,
-    input: RunModelQuery,
+    run_query: RunModelQuery,
     client: Annotated[ReplicateClient, Depends(get_replicate_client)],
+    version: str | None = None,
 ):
     try:
-        models = await client.run_model(model, input_params=input.model_dump())
+        models = await client.run_model(model, version, input_params=run_query.input)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
