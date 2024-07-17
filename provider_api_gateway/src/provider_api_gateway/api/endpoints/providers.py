@@ -25,7 +25,7 @@ async def list_categories(
     return ProviderModelCategoriesList(categories=categories)
 
 
-@router.post("/runs/{id}/status", response_model=RunStatus)
+@router.get("/runs/{id}/status", response_model=RunStatus)
 async def get_run_status(
     id: str,
     client: Annotated[ReplicateClient, Depends(get_replicate_client)],
@@ -38,7 +38,7 @@ async def get_run_status(
     return status
 
 
-@router.post("/runs/{id}/result", response_model=RunResult)
+@router.get("/runs/{id}/result", response_model=RunResult)
 async def get_run_result(
     id: str,
     client: Annotated[ReplicateClient, Depends(get_replicate_client)],

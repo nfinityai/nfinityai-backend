@@ -35,6 +35,5 @@ class RunResult(Run):
     finished_at: datetime | None = Field(None, validation_alias="completed_at")
 
 
-class RunStatus(BaseModel):
-    id: str
-    status: ProviderRunStateEnum
+class RunStatus(Run):
+    pass
