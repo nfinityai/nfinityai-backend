@@ -1,6 +1,8 @@
 from datetime import datetime
+from os import cpu_count
 from typing import Any
 
+from numpy import info
 from pydantic import BaseModel, Field
 
 
@@ -57,3 +59,27 @@ class ModelProviderModelRunAsyncStatus(ModelProviderModelRunAsync):
 class ModelProviderModelRunAsyncResult(ModelProviderModelRunAsync):
     result: ModelProviderModelRunResultModel
     finished_at: datetime | None
+
+
+
+class ModelProviderHardwareCostInfo(BaseModel):
+    name: str
+    sku: str
+    price_per_second: float
+    price_per_hour: float
+    gpu_count: int
+    cpu_count: int
+    gpu_ram_gb: int
+    ram_gb: int
+
+class ModelProviderHardwareCosts(BaseModel):
+    info: list[ModelProviderHardwareCostInfo]
+
+
+class ModelProviderModelCostInfo(BaseModel):
+    name: str
+    sku: str
+    prediction_time: float
+
+class ModelProviderModelCosts(BaseModel):
+    info: ModelProviderModelCostInfo

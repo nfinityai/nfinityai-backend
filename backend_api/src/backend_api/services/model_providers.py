@@ -11,6 +11,8 @@ from typing_extensions import Annotated
 from backend_api.backend.config import Settings, get_settings
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList,
+    ModelProviderHardwareCosts,
+    ModelProviderModelCosts,
     ModelProviderModelList,
     ModelProviderModelRunAsync,
     ModelProviderModelRunAsyncResult,
@@ -119,6 +121,25 @@ class ModelProviderService:
             data = await response.json()
 
         return ModelProviderModelRunAsyncResult(**data)
+    
+    async def get_model_costs(self, provider: str, model: str) -> ModelProviderModelCosts:
+        url = self._build_url(f"/providers/{provider}/models/{model}/info")
+        async with self.client.get(url) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing categories: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            data = await response.json()
+        return ModelProviderModelCosts(**data)
+
+
+    async def get_hardware_costs(self, provider: str) -> ModelProviderHardwareCosts:
+        url = self._build_url(f"/providers/{provider}/hardware/costs")
+        async with self.client.get(url) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing categories: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            data = await response.json()
+        return ModelProviderHardwareCosts(**data)
 
 
 def get_retry_options(
