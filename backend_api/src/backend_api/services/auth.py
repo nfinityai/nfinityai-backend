@@ -26,7 +26,7 @@ class AuthService(BaseService[UserModel]):
         super().__init__(session)
         self.settings = settings
 
-    async def get_or_add_user(self, user: CreateUserSchema) -> UserSchema | None:
+    async def get_or_add_user(self, user: CreateUserSchema) -> UserSchema:
         user_model = UserModel(**user.model_dump())
         return await AuthDatamanager(self.session).get_or_add_user(user_model)
 
@@ -57,7 +57,7 @@ class AuthDatamanager(BaseDataManager[UserModel]):
         model = await self.get_one(stmt)
         return UserSchema(**model.model_dump()) if model is not None else None
     
-    async def get_or_add_user(self, user: UserModel) -> UserSchema | None:
+    async def get_or_add_user(self, user: UserModel) -> UserSchema:
         user_model = await self.get_user(user.address)
 
         if user_model is None:

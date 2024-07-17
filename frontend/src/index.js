@@ -11,12 +11,19 @@ async function getSiweMessage(address) {
   console.log(JSON.stringify(data.message));
 
   const siwe_message = new SiweMessage({
+    scheme: data.message.scheme,
     domain: data.message.domain,
     address: data.message.address,
-    statement: data.message.statement,
     uri: data.message.uri,
     version: data.message.version,
-    chainId: data.message.chain_id
+    chainId: data.message.chain_id,
+    issuedAt: data.message.issued_at,
+    nonce: data.message.nonce,
+    statement: data.message.statement,
+    expirationTime: data.message.expiration_time,
+    notBeforeTime: data.message.not_before,
+    requestId: data.message.request_id,
+    resources: data.message.resources,
   });
 
   return siwe_message.prepareMessage();
@@ -32,7 +39,7 @@ async function signInWithEthereum () {
   const message = await getSiweMessage(
       signer.address
     );
-  console.log(`Prepare message: ${message}`);
+  console.log(`Prepare message: ${JSON.stringify(message)}`);
   console.log(await signer.signMessage(message));
 }
 

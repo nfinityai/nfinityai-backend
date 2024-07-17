@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     database_url: str = Field(validation_alias="BACKEND_API_DATABASE_URL")
     provider_api_url: str = Field(validation_alias="BACKEND_API_PROVIDER_API_URL")
+    provider_api_retry_attempts: int = Field(default=3, validation_alias="BACKEND_API_PROVIDER_API_RETRY_ATTEMPTS")
+    provider_api_factor: int = Field(default=2, validation_alias="BACKEND_API_PROVIDER_API_RETRY_FACTOR")
 
     provider: str = Field(validation_alias="BACKEND_API_PROVIDER_NAME")
 

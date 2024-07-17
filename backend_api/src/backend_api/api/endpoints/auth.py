@@ -24,7 +24,5 @@ async def verify_message(
     user = CreateUserSchema(address=verify.address)
 
     user = await auth_service.get_or_add_user(user)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
     return await auth_service.authenticate(user.address)

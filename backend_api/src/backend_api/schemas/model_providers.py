@@ -1,11 +1,12 @@
-from pydantic import BaseModel
+from typing import Any
+from pydantic import BaseModel, Field
 
 
 class ModelProviderCategory(BaseModel):
     name: str
     slug: str
     description: str
-    provider: str
+    provider: str = Field(exclude=True)
 
 
 class ModelProviderCategoryList(BaseModel):
@@ -13,15 +14,15 @@ class ModelProviderCategoryList(BaseModel):
 
 
 class ModelProviderDefaultExampleModel(BaseModel):
-    input: dict
-    output: dict
+    input: dict | None
+    output: Any
 
 
 class ModelProviderModel(BaseModel):
     name: str
     description: str
     run_count: int
-    image_url: str
+    image_url: str = Field(validation_alias='cover_image_url')
     default_example: ModelProviderDefaultExampleModel
     latest_version: dict
     slug: str
