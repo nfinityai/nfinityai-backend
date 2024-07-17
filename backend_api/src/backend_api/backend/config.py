@@ -19,9 +19,11 @@ class Settings(BaseSettings):
     provider: str = Field(validation_alias="BACKEND_API_PROVIDER_NAME")
 
 
-settings = Settings()  # type: ignore
+    free_trial_mode: bool = Field(default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE")
+    free_trial_credits: int = Field(default=500, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
+
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return settings
+    return Settings()  # type: ignore

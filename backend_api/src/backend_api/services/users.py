@@ -13,7 +13,7 @@ class UserService(BaseService[UserModel]):
 
 class UserDataManager(BaseDataManager[UserModel]):
     async def get_user(self, address: str) -> UserSchema:
-        stmt = select(UserModel).where(UserModel.address == address)
+        stmt = select(UserModel).where(UserModel.wallet_address == address)
 
         model = await self.get_one(stmt)
         return UserSchema(**model.model_dump())

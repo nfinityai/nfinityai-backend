@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import select
 
-from backend_api.backend.config import Settings, get_settings, settings
+from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.session import AsyncSession, get_session
 from backend_api.models.users import User as UserModel
 from backend_api.schemas.auth import PayloadModel, TokenModel
@@ -52,13 +52,13 @@ class AuthDatamanager(BaseDataManager[UserModel]):
         await self.add_one(user)
 
     async def get_user(self, address: str) -> UserSchema | None:
-        stmt = select(UserModel).where(UserModel.address == address)
+        stmt = select(UserModel).where(UserModel.wallet_address == address)
 
         model = await self.get_one(stmt)
         return UserSchema(**model.model_dump()) if model is not None else None
     
     async def get_or_add_user(self, user: UserModel) -> UserSchema:
-        user_model = await self.get_user(user.address)
+        user_model = await self.get_user(user.wallet_address)
 
         if user_model is None:
             await self.add_user(user)
@@ -71,7 +71,7 @@ def get_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depend
     if credentials is None or credentials.credentials is None:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    payload = decode_jwt(credentials.credentials, settings=settings)
+    payload = decode_jwt(credentials.credentials, settings=get_settings())
 
     return UserSchema(**payload)
 
