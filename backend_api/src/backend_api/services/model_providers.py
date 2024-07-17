@@ -1,5 +1,6 @@
 import logging
 from http import HTTPStatus
+from urllib.parse import urlencode, urljoin
 
 import aiohttp
 from fastapi import Depends
@@ -19,28 +20,38 @@ class ModelProviderService:
         self.api_url = settings.provider_api_url
         self.session = aiohttp.ClientSession()
 
+    def _build_url(self, path: str, **params) -> str:
+        if params:
+            path = f"{path}?{urlencode(params)}"
+        return urljoin(self.api_url, path)
+
     async def list_categories(self):
-        async with self.session.get(
-            self.api_url + "/providers/categories"
-        ) as response:
+        url = self._build_url("/categories")
+        async with self.session.get(url) as response:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing categories: {response=}")
                 raise ModelProviderException("Error while listing categories")
             return await response.json()
 
-    async def list_models(self, category: str):
-        async with self.session.get(
-            self.api_url + f"/replicate/collections/{category}/models"
-        ) as response:
+    async def list_models(self, provider: str, category: str):
+        url = self._build_url(f"/providers/{provider}/categories/{category}/models")
+        async with self.session.get(url) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing models: {response=}")
+                raise ModelProviderException("Error while listing models")
+            return await response.json()
+
+    async def run_model(self, provider: str, model: str, params: dict, version: str | None = None):
+        url = self._build_url(f"/providers/{provider}/models/{model}/run", version=version)
+        async with self.session.post(url, json={'input': params}) as response:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing models: {response=}")
                 raise ModelProviderException("Error while listing categories")
             return await response.json()
 
-    async def run_model(self, model: str, params: dict):
-        async with self.session.post(
-            self.api_url + f"/replicate/run/{model}", json=params
-        ) as response:
+    async def run_model_async(self, provider: str, model: str, params: dict, version: str | None = None):
+        url = self._build_url(f"/providers/{provider}/models/{model}/run_async", version=version)
+        async with self.session.post(url, json={'input': params}) as response:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing models: {response=}")
                 raise ModelProviderException("Error while listing categories")

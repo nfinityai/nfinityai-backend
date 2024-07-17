@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
+from backend_api.backend.config import Settings, get_settings
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList as ModelProviderCategorySchemaList,
 )
@@ -42,19 +43,22 @@ async def get_all_models(
     category: str,
     current_user: Annotated[UserModel, Depends(get_current_user)],
     model_provider_service: ModelProviderService = Depends(get_model_provider_service),
+    settings: Settings = Depends(get_settings),
 ):
     return ModelProviderModelSchemaList(
-        models=await model_provider_service.list_models(category)
+        models=await model_provider_service.list_models(settings.provider, category)
     )
 
 
-@router.get("/models/run/{model:path}", response_model=ModelProviderModelRunResultSchema)
+@router.get("/models/run/{model}", response_model=ModelProviderModelRunResultSchema)
 async def run_model(
     model: str,
-    input: ModelRunQuery,
+    run_query: ModelRunQuery,
     current_user: Annotated[UserModel, Depends(get_current_user)],
     model_provider_service: ModelProviderService = Depends(get_model_provider_service),
+    settings: Settings = Depends(get_settings),
+    version: str | None = None,
 ):
     return ModelProviderModelRunResultSchema(
-        result=await model_provider_service.run_model(model, params=input.model_dump())
+        result=await model_provider_service.run_model(settings.provider, model, run_query.input, version)
     )

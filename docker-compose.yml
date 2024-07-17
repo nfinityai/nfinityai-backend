@@ -16,8 +16,8 @@ services:
     build:
       context: provider_api_gateway/
       dockerfile: docker/Dockerfile
-    ports:
-      - "${PROVIDER_API_GATEWAY_PORT:-8002}:8000"
+    expose:
+      - 8000
     environment:
       - REPLICATE_API_TOKEN=${PROVIDER_REPLICATE_API_TOKEN}
   db:

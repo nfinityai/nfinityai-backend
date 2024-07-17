@@ -12,12 +12,20 @@ class ModelProviderCategoryList(BaseModel):
     categories: list[ModelProviderCategory]
 
 
+class ModelProviderDefaultExampleModel(BaseModel):
+    input: dict
+    output: dict
+
+
 class ModelProviderModel(BaseModel):
-    owner: str
     name: str
     description: str
-    default_example: dict
+    run_count: int
+    image_url: str
+    default_example: ModelProviderDefaultExampleModel
     latest_version: dict
+    slug: str
+    version: str
 
 
 class ModelProviderModelList(BaseModel):

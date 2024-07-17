@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     jwt_access_token_expires_in: int = 1440
 
     database_url: str = Field(validation_alias="BACKEND_API_DATABASE_URL")
-    provider_api_url: str = Field(validation_alias="BACKEND_API_PROVIDER_API_URL")    
+    provider_api_url: str = Field(validation_alias="BACKEND_API_PROVIDER_API_URL")
+
+    provider: str = Field(validation_alias="BACKEND_API_PROVIDER_NAME")
 
 
 settings = Settings()  # type: ignore
