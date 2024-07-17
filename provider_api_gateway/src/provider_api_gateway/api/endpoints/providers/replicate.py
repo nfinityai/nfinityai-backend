@@ -6,7 +6,7 @@ from provider_api_gateway.providers.replicate import (
     ReplicateClient,
     get_replicate_client,
 )
-from provider_api_gateway.schemas.runs import Run
+from provider_api_gateway.schemas.runs import Run, RunResultModel
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ async def list_models(
     return models
 
 
-@router.post("/models/{model}/run")
+@router.post("/models/{model}/run", response_model=RunResultModel)
 async def run_model(
     model: str,
     run_query: RunModelQuery,

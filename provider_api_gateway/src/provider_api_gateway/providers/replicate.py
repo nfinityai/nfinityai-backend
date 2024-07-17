@@ -6,6 +6,7 @@ from replicate import async_paginate
 from replicate.client import Client
 from replicate.model import Model
 from replicate.version import Version
+from replicate.exceptions import ModelError as ReplicateModelError
 
 from provider_api_gateway.config import Settings, get_settings
 from provider_api_gateway.logging import get_logger
@@ -67,22 +68,26 @@ class ReplicateClient(BaseProvider, Client):
 
     async def run_model(
         self, model_slug: str, model_version: str | None, input_params: dict
-    ):
+    ) -> RunResultModel:
         """Run a model from the Replicate provider."""
         model = decode_string(model_slug)
         if model_version is not None:
             model = f"{model}:{model_version}"
         logger.info("Running model", model=model, input=input_params)
-        result = await self._run_model(model, input_params)
-        output, execution_time = result  # type: ignore
+        output, execution_time = await self._run_model(model, input_params)
         logger.info(
             "Model finished", model=model, execution_time=execution_time, output=output
         )
-        return output
+        return output  # type: ignore
 
     @measured
     async def _run_model(self, ref: Any, input: dict, **kwargs):
-        return await self.async_run(ref, input=input, **kwargs)
+        try:
+            output = await self.async_run(ref, input=input, **kwargs)
+            return RunResultModel(output=output)
+        except ReplicateModelError as e:
+            logger.error('Unable to get result', model=ref, input=input, error=e)
+            return RunResultModel(error=str(e))
 
     async def run_model_async(
         self, model_slug: str, model_version: str | None, input_params: dict

@@ -12,6 +12,9 @@ from backend_api.backend.config import Settings, get_settings
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList,
     ModelProviderModelList,
+    ModelProviderModelRunAsync,
+    ModelProviderModelRunAsyncResult,
+    ModelProviderModelRunResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -56,7 +59,7 @@ class ModelProviderService:
             data = await response.json()
         return ModelProviderCategoryList(**data)
 
-    async def list_models(self, provider: str, category: str):
+    async def list_models(self, provider: str, category: str) -> ModelProviderModelList:
         url = self._build_url(f"/providers/{provider}/categories/{category}/models")
         async with self.client.get(url) as response:
             if response.status != HTTPStatus.OK:
@@ -67,7 +70,7 @@ class ModelProviderService:
 
     async def run_model(
         self, provider: str, model: str, params: dict, version: str | None = None
-    ):
+    ) -> ModelProviderModelRunResult:
         url = self._build_url(
             f"/providers/{provider}/models/{model}/run", version=version
         )
@@ -75,11 +78,13 @@ class ModelProviderService:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing models: {response=}")
                 raise ModelProviderException("Error while listing categories")
-            return await response.json()
+            data = await response.json()
+
+        return ModelProviderModelRunResult(result=data)
 
     async def run_model_async(
         self, provider: str, model: str, params: dict, version: str | None = None
-    ):
+    ) -> ModelProviderModelRunAsync:
         url = self._build_url(
             f"/providers/{provider}/models/{model}/run_async", version=version
         )
@@ -87,7 +92,32 @@ class ModelProviderService:
             if response.status != HTTPStatus.OK:
                 logger.error(f"Error while listing models: {response=}")
                 raise ModelProviderException("Error while listing categories")
-            return await response.json()
+            data = await response.json()
+        return ModelProviderModelRunAsync(**data)
+    
+    async def run_model_async_status(
+        self, job_id: str
+    ) -> ModelProviderModelRunAsyncResult:
+        url = self._build_url(f"/runs/{job_id}/result")
+        async with self.client.get(url) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing categories: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            data = await response.json()
+
+        return ModelProviderModelRunAsyncResult(**data)
+
+    async def run_model_async_result(
+        self, job_id: str
+    ) -> ModelProviderModelRunAsyncResult:
+        url = self._build_url(f"/runs/{job_id}/result")
+        async with self.client.get(url) as response:
+            if response.status != HTTPStatus.OK:
+                logger.error(f"Error while listing categories: {response=}")
+                raise ModelProviderException("Error while listing categories")
+            data = await response.json()
+
+        return ModelProviderModelRunAsyncResult(**data)
 
 
 def get_retry_options(
