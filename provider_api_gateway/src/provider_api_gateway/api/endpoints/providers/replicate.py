@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
+from provider_api_gateway.config import Settings, get_settings
 from provider_api_gateway.providers.replicate import (
     ReplicateClient,
     get_replicate_client,
 )
 from provider_api_gateway.schemas.models import ProviderModelCost
 from provider_api_gateway.schemas.runs import Run, RunResultModel
-from provider_api_gateway.services.extractors.replicate import ReplicateHardwareCostExtractor, get_cost_table_extractor
 
 router = APIRouter()
 
@@ -86,10 +86,11 @@ async def list_hardware(
 
 @router.get("/hardware/costs")
 async def get_hardware_cost_info(
-    extractor: Annotated[ReplicateHardwareCostExtractor, Depends(get_cost_table_extractor)]       
+    settings: Annotated[Settings, Depends(get_settings)],
+    client: Annotated[ReplicateClient, Depends(get_replicate_client)],    
 ):
     try:
-        cost_info = extractor.extract_cost_info()
+        cost_info = await client.get_hardware_cost_info(settings.replicate_hardware_pricing_url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    return Response(cost_info.to_json(orient="records"), media_type="application/json") if cost_info is not None else None
+    return cost_info

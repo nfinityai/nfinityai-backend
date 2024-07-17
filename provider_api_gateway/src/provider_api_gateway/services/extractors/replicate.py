@@ -1,4 +1,7 @@
+from http import HTTPStatus
 from typing import Annotated
+import aiohttp
+import aiohttp_retry
 from fastapi import Depends
 from pydantic import BaseModel, Field, computed_field, field_validator
 import requests
@@ -36,29 +39,38 @@ class CostInfoModel(BaseModel):
         return
 
 class ReplicateModelCostExtractor:
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, client: aiohttp_retry.RetryClient):
+        self.client = client
 
-    def fetch_page(self):
-        response = requests.get(self.url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        return response.text
+    async def __aenter__(self):
+        await self.client.__aenter__()
+        return self
 
-    def parse_content(self, html_content):
+    async def __aexit__(self, *args, **kwargs):
+        await self.client.__aexit__(*args, **kwargs)
+
+    async def fetch_page(self, url: str):
+        async with self.client.get(url) as resp:
+            if resp.status!= HTTPStatus.OK:
+                logger.error("Failed to fetch page", url=url, status=resp.status)
+                resp.raise_for_status()
+            return await resp.text()
+
+    def parse_content(self, url: str, html_content):
         soup = BeautifulSoup(html_content, "html.parser")
 
         # Find the "Run time and cost" section
         section_header = soup.find("h4", string="Run time and cost")
 
         if not section_header:
-            logger.warning("Run time and cost section not found", url=self.url)
+            logger.warning("Run time and cost section not found", url=url)
             return None
 
         # Assuming the information is within the next sibling element
         section_content = section_header.find_next_sibling("p")
 
         if not section_content:
-            logger.warning("Run time and cost content not found", url=self.url)
+            logger.warning("Run time and cost content not found", url=url)
             return None
 
         return section_content.get_text(strip=True)
@@ -79,14 +91,13 @@ class ReplicateModelCostExtractor:
 
         return CostInfoModel(name=gpu, prediction_time=prediction_time)  # type: ignore
 
-    def get_run_time_and_cost(self):
-        html_content = self.fetch_page()
-        run_time_and_cost_info = self.parse_content(html_content)
+    async def get_run_time_and_cost(self, url):
+        html_content = await self.fetch_page(url)
+        run_time_and_cost_info = self.parse_content(url, html_content)
         if run_time_and_cost_info:
             extracted_info = self.extract_gpu_and_prediction_time(run_time_and_cost_info)
             return extracted_info
         return None
-    
 
 class HardwareCostModel(BaseModel):
     hardware: str = Field(..., alias="Hardware", exclude=True)
@@ -147,14 +158,22 @@ class HardwareCostModel(BaseModel):
 
 
 class ReplicateHardwareCostExtractor:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self, client: aiohttp_retry.RetryClient):
+        self.client = client
 
+    async def __aenter__(self):
+        await self.client.__aenter__()
+        return self
 
-    def fetch_page(self):
-        response = requests.get(self.url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        return response.text
+    async def __aexit__(self, *args, **kwargs):
+        await self.client.__aexit__(*args, **kwargs)
+
+    async def fetch_page(self, url: str):
+        async with self.client.get(url) as resp:
+            if resp.status!= HTTPStatus.OK:
+                logger.error("Failed to fetch page", url=url, status=resp.status)
+                resp.raise_for_status()
+            return await resp.text()
 
     def get_cost_table(self, html_content):
         soup = BeautifulSoup(html_content, "html.parser")
@@ -189,12 +208,38 @@ class ReplicateHardwareCostExtractor:
 
         return pd.DataFrame(rows)
     
-    def extract_cost_info(self) -> pd.DataFrame | None:
-        html_content = self.fetch_page()
+    async def extract_cost_info(self, url: str) -> pd.DataFrame | None:
+        html_content = await self.fetch_page(url)
         cost_table  = self.get_cost_table(html_content)
         
         return cost_table
 
 
-def get_cost_table_extractor(settings: Annotated[Settings, Depends(get_settings)]):
-    return ReplicateHardwareCostExtractor(settings.replicate_hardware_pricing_url)
+def get_retry_options(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> aiohttp_retry.ExponentialRetry:
+    return aiohttp_retry.ExponentialRetry(
+        attempts=settings.extractor_retry_attempts,
+        factor=settings.extractor_retry_factor,
+    )
+
+async def get_session() -> aiohttp.ClientSession:
+    return aiohttp.ClientSession()
+
+
+async def get_retry_client(
+    session: Annotated[aiohttp.ClientSession, Depends(get_session)],
+    retry_options: Annotated[
+        aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)
+    ],
+) -> aiohttp_retry.RetryClient:
+    return aiohttp_retry.RetryClient(client_session=session, retry=retry_options)
+
+
+async def get_replicate_model_cost_extractor(client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)]):
+    async with ReplicateModelCostExtractor(client) as extractor:
+        yield extractor
+
+async def get_cost_table_extractor(client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)]):
+    async with ReplicateHardwareCostExtractor(client) as extractor:
+        yield extractor

@@ -4,18 +4,24 @@ from typing import Annotated, Any
 from fastapi import Depends
 from replicate import async_paginate
 from replicate.client import Client
+from replicate.exceptions import ModelError as ReplicateModelError
 from replicate.model import Model
 from replicate.version import Version
-from replicate.exceptions import ModelError as ReplicateModelError
 
 from provider_api_gateway.config import Settings, get_settings
 from provider_api_gateway.logging import get_logger
 from provider_api_gateway.providers.base import BaseProvider
 from provider_api_gateway.providers.exceptions import ReplicateClientError
 from provider_api_gateway.schemas.categories import ProviderModelCategory
-from provider_api_gateway.schemas.models import ProviderModel, ProviderModelCost
+from provider_api_gateway.schemas.models import ProviderHardwareCost, ProviderModel, ProviderModelCost
 from provider_api_gateway.schemas.runs import Run, RunResult, RunResultModel, RunStatus
 from provider_api_gateway.schemas.types import ProviderEnum
+from provider_api_gateway.services.extractors.replicate import (
+    ReplicateHardwareCostExtractor,
+    ReplicateModelCostExtractor,
+    get_cost_table_extractor,
+    get_replicate_model_cost_extractor,
+)
 from provider_api_gateway.utils import decode_string, measured
 
 logger = get_logger(__name__)
@@ -39,6 +45,17 @@ class ReplicatePredictionState(str, Enum):
 
 class ReplicateClient(BaseProvider, Client):
     PROVIDER_ID = ProviderEnum.REPLICATE
+
+    def __init__(
+        self,
+        model_cost_extractor: ReplicateModelCostExtractor,
+        hardware_cost_extractor: ReplicateHardwareCostExtractor,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.model_cost_extractor = model_cost_extractor
+        self.hardware_cost_extractor = hardware_cost_extractor
 
     async def list_categories(self) -> list[ProviderModelCategory]:
         categories = []
@@ -142,15 +159,31 @@ class ReplicateClient(BaseProvider, Client):
     async def get_hardware_list(self):
         return await self.hardware.async_list()
 
-
     # cost info
 
     async def get_model_cost_info(self, model_slug: str) -> ProviderModelCost:
         model = await self.models.async_get(decode_string(model_slug))
-        return ProviderModelCost(url=model.url)
+        info = await self.model_cost_extractor.get_run_time_and_cost(model.url)
+
+        return ProviderModelCost(info=info)
+    
+    async def get_hardware_cost_info(self, url: str) -> ProviderHardwareCost:
+        info = await self.hardware_cost_extractor.extract_cost_info(url)
+
+        return ProviderHardwareCost(info=info.to_dict(orient='records') if info is not None else None)
 
 
 def get_replicate_client(
     settings: Annotated[Settings, Depends(get_settings)],
+    model_cost_extractor: Annotated[
+        ReplicateModelCostExtractor, Depends(get_replicate_model_cost_extractor)
+    ],
+    hardware_cost_extractor: Annotated[
+        ReplicateHardwareCostExtractor, Depends(get_cost_table_extractor)
+    ],
 ) -> ReplicateClient:
-    return ReplicateClient(api_token=settings.replicate_api_token)
+    return ReplicateClient(
+        model_cost_extractor,
+        hardware_cost_extractor,
+        api_token=settings.replicate_api_token,
+    )

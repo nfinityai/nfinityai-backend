@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     replicate_hardware_pricing_url: str = 'https://replicate.com/pricing'
 
+    extractor_retry_attempts: int = 3
+    extractor_retry_factor: int = 2
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore

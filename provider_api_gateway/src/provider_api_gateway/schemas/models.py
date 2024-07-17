@@ -1,9 +1,9 @@
 from typing import Any
+
 from pydantic import BaseModel, Field, computed_field
 
 from provider_api_gateway.services.extractors.replicate import (
     CostInfoModel,
-    ReplicateModelCostExtractor,
 )
 from provider_api_gateway.utils import encode_string
 
@@ -68,9 +68,8 @@ class ProviderModelList(BaseModel):
 
 
 class ProviderModelCost(BaseModel):
-    url: str = Field(..., exclude=True)
+    info: CostInfoModel | None
 
-    @computed_field
-    @property
-    def info(self) -> CostInfoModel | None:
-        return ReplicateModelCostExtractor(self.url).get_run_time_and_cost()
+
+class ProviderHardwareCost(BaseModel):
+    info: Any | None
