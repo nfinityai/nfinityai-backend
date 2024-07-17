@@ -1,11 +1,15 @@
 from typing import Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, computed_field
 
 from provider_api_gateway.utils import encode_string
 
+class ProviderModelDefaultExampleModel(BaseModel):
+    input: dict | None
+    output: Any | None
+
 
 class ProviderModel(BaseModel):
-    owner: str
+    owner: str = Field(..., exclude=True)
     """
     The owner of the model.
     """
@@ -13,6 +17,11 @@ class ProviderModel(BaseModel):
     name: str
     """
     The name of the model.
+    """
+
+    url: str = Field(..., exclude=True)
+    """
+    The URL of the model.
     """
 
     description: str | None
@@ -30,7 +39,7 @@ class ProviderModel(BaseModel):
     The URL of the cover image for the model.
     """
 
-    default_example: dict | None
+    default_example: ProviderModelDefaultExampleModel | None
     """
     The default example of the model.
     """
@@ -40,30 +49,18 @@ class ProviderModel(BaseModel):
     The latest version of the model.
     """
 
+    @computed_field
     @property
     def slug(self) -> str:
         slug = f"{self.owner}/{self.name}"
         return encode_string(slug)
     
+    @computed_field
     @property
     def version(self) -> str | None:
         if self.latest_version is not None and "id" in self.latest_version:
             return self.latest_version["id"]
         return None
-
-    def model_dump(self, *args, **kwargs) -> dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)
-        data["slug"] = self.slug
-        data["version"] = self.version
-        del data["owner"]
-
-        if "default_example" in data and data["default_example"]:
-            data["default_example"] = {
-                "input": data["default_example"]["input"],
-                "output": data["default_example"]["output"],
-            }
-
-        return data
 
 
 class ProviderModelList(BaseModel):

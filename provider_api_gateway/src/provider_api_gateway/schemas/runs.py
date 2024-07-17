@@ -41,7 +41,6 @@ class Run(BaseModel):
 class RunResult(Run):
     result: RunResultModel | None = None
     finished_at: datetime | None = Field(default=None, validation_alias="completed_at")
-    metrics: dict | None = Field(default=None, exclude=True)
 
 
 class RunStatus(Run):
