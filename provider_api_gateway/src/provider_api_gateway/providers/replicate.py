@@ -88,6 +88,8 @@ class ReplicateClient(BaseProvider, Client):
         except ReplicateModelError as e:
             logger.error('Unable to get result', model=ref, input=input, error=e)
             return RunResultModel(error=str(e))
+        
+    # async model run
 
     async def run_model_async(
         self, model_slug: str, model_version: str | None, input_params: dict
@@ -129,11 +131,16 @@ class ReplicateClient(BaseProvider, Client):
         prediction = self.predictions.get(id)
         logger.info("Getting result", prediction=prediction)
         if prediction.status in ReplicatePredictionState.finished_states():
-            result = RunResultModel(output=prediction.output, error=prediction.error)
+            result = RunResultModel(**prediction.dict())
             return RunResult(result=result, **prediction.dict())
 
         # TODO: handle other states
         return RunResult(**prediction.dict())
+    
+    # hardware specs
+
+    async def get_hardware_list(self):
+        return await self.hardware.async_list()
 
 
 def get_replicate_client(

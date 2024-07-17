@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from provider_api_gateway.schemas.types import ProviderRunStateEnum
 
@@ -9,6 +9,14 @@ from provider_api_gateway.schemas.types import ProviderRunStateEnum
 class RunResultModel(BaseModel):
     error: str | None = None
     output: Any | None = None
+    metrics: dict | None = Field(default=None, exclude=True)
+
+    @computed_field
+    @property
+    def elapsed_time(self) -> float | None:
+        if self.metrics and "predict_time" in self.metrics:
+            return float(self.metrics["predict_time"])
+        return None
 
 
 class Run(BaseModel):
@@ -32,7 +40,8 @@ class Run(BaseModel):
 
 class RunResult(Run):
     result: RunResultModel | None = None
-    finished_at: datetime | None = Field(None, validation_alias="completed_at")
+    finished_at: datetime | None = Field(default=None, validation_alias="completed_at")
+    metrics: dict | None = Field(default=None, exclude=True)
 
 
 class RunStatus(Run):

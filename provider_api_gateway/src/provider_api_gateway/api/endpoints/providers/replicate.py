@@ -56,3 +56,14 @@ async def run_model_async(
         raise HTTPException(status_code=500, detail=str(e))
 
     return run
+
+
+@router.get("/hardware")
+async def list_hardware(
+    client: Annotated[ReplicateClient, Depends(get_replicate_client)],
+):
+    try:
+        hardware = await client.get_hardware_list()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return hardware
