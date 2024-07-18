@@ -36,6 +36,9 @@ class TransactionService(BaseService[TransactionModel]):
     async def get_transaction(self, id: int) -> TransactionSchema:
         return await TransactionDataManager(self.session).get_transaction(id)
 
+    async def get_transactions(self, user_id: int) -> list[TransactionSchema]:
+        return await TransactionDataManager(self.session).get_transactions(user_id)
+
     async def create_transaction(
         self, transaction: CreateTransactionSchema
     ) -> TransactionSchema:
@@ -67,6 +70,12 @@ class TransactionDataManager(BaseDataManager[TransactionModel]):
 
         model = await self.get_one(stmt)
         return TransactionSchema(**model.model_dump())
+    
+    async def get_transactions(self, user_id: int) -> list[TransactionSchema]:
+        stmt = select(TransactionModel).where(TransactionModel.user_id == user_id)
+
+        models = await self.get_all(stmt)
+        return [TransactionSchema(**model.model_dump()) for model in models]
 
     async def create_transaction(
         self, transaction: CreateTransactionSchema

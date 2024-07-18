@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from backend_api.schemas.auth import SiweAuthModel, TokenModel, VerifyModel
 from backend_api.schemas.users import CreateUser as CreateUserSchema

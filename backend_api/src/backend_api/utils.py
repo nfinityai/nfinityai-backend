@@ -53,4 +53,4 @@ def verify_siwe_message(message: SiweMessage, signature: str) -> VerifyModel:
         message.verify(signature)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return VerifyModel(message=message, address=message.address)
+    return VerifyModel(message=message, address=message.address, signature=signature)

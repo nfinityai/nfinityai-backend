@@ -153,28 +153,36 @@ class ModelProviderService:
                 raise ModelProviderException("Error while listing categories")
             data = await response.json()
         return ModelProviderHardwareCosts(**data)
-    
-    async def _calculate_cost(self, provider: str, model: str, elapsed_time: float | None) -> float:
+
+    async def _calculate_cost(
+        self, provider: str, model: str, elapsed_time: float | None
+    ) -> float:
         model_costs = await self.get_model_costs(provider, model)
         if elapsed_time is None:
             elapsed_time = model_costs.info.prediction_time
         hardware_costs = await self.get_hardware_costs(provider)
-        for hardware in filter(lambda x: x.sku == model_costs.info.sku, hardware_costs.info):
+        for hardware in filter(
+            lambda x: x.sku == model_costs.info.sku, hardware_costs.info
+        ):
             cost = hardware.price_per_second * elapsed_time
             return cost
         return self.settings.default_model_cost
-        
-    async def _build_usage(self, provider: str, model:str, user: UserSchema, elapsed_time: float | None, signature: str):
-        cost = await self._calculate_cost(provider, model, elapsed_time)
-        return CreateUsage(
-            user_id=user.id,
-            credits_spent=cost,
-            request_signature=signature
-        )
-    
-    async def track_usage(self, usage: CreateUsage):
-        return await self.usage_service.create_usage(usage)
 
+    async def track_usage(
+        self,
+        provider: str,
+        model: str,
+        user: UserSchema,
+        elapsed_time: float | None,
+        signature: str,
+    ):
+        return await self.usage_service.create_usage(
+            CreateUsage(
+                user_id=user.id,
+                credits_spent=await self._calculate_cost(provider, model, elapsed_time),
+                request_signature=signature,
+            )
+        )
 
 
 def get_retry_options(

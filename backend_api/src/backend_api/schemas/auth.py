@@ -9,6 +9,7 @@ class SiweAuthModel(BaseModel):
 class VerifyModel(BaseModel):
     message: SiweMessage
     address: str
+    signature: str
 
 
 class PayloadModel(BaseModel):
