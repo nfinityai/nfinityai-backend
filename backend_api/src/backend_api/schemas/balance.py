@@ -1,15 +1,30 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-from backend_api.models.balance import TransactionType
+from backend_api.models.balance import TransactionStatus, TransactionType
 
 
 class Balance(BaseModel):
     user_id: int
     amount: float
 
-class Transaction(BaseModel):
+class CreateTransaction(BaseModel):
     user_id: int
     amount: float
-    transaction_type: TransactionType
+    type: TransactionType
+    status: TransactionStatus
     created_at: datetime = Field(default_factory=datetime.now)
+
+
+class Transaction(CreateTransaction):
+    id: int
+    finished_at: datetime | None = None
+
+
+class UpdateTransactionCompleted(Transaction):
+    status: TransactionStatus = TransactionStatus.COMPLETED
+    finished_at: datetime = Field(default_factory=datetime.now)
+
+class UpdateTransactionFailed(Transaction):
+    status: TransactionStatus = TransactionStatus.FAILED
+    finished_at: datetime = Field(default_factory=datetime.now)

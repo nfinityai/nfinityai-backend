@@ -23,8 +23,10 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('transaction_type', sa.Enum('DEBIT', 'CREDIT', name='transactiontype'), nullable=False),
+    sa.Column('type', sa.Enum('DEBIT', 'CREDIT', name='transactiontype'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'COMPLETED', name='transactionstatus'), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('finished_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

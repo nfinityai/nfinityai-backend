@@ -24,9 +24,17 @@ class TransactionType(str, Enum):
     CREDIT = "credit"
 
 
+class TransactionStatus(str, Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Transaction(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id")
     amount: float = Field(nullable=False)
-    transaction_type: TransactionType = Field(nullable=False)
+    type: TransactionType = Field(nullable=False)
+    status: TransactionStatus = Field(default=TransactionStatus.PENDING, nullable=False)
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    finished_at: datetime = Field(default=None, nullable=True)

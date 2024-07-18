@@ -1,7 +1,6 @@
+from .balance import BalanceNotFoundError, InsufficientFundsError
 
-
-class BalanceNotFoundError(BaseException):
-    pass
-
-class InsufficientFundsError(BaseException):
-    pass
+__all__ = (
+    "BalanceNotFoundError",
+    "InsufficientFundsError",
+)

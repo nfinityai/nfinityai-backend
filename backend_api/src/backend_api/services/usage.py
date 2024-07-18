@@ -1,11 +1,11 @@
 from sqlmodel import select
 
 from backend_api.backend.session import AsyncSession
-from backend_api.models.balance import TransactionType
+from backend_api.models.balance import TransactionStatus, TransactionType
 from backend_api.models.usage import Usage as UsageModel
 from backend_api.schemas.usage import CreateUsage, Usage as UsageSchema
 from backend_api.services.transaction import TransactionService
-from backend_api.schemas.balance import Transaction as TransactionSchema
+from backend_api.schemas.balance import CreateTransaction as CreateTransactionSchema
 
 from .base import BaseDataManager, BaseService
 
@@ -25,10 +25,11 @@ class UsageService(BaseService[UsageModel]):
 
     async def create_usage(self, create_usage: CreateUsage) -> UsageSchema:
         transaction = await self.transaction_service.create_transaction(
-            TransactionSchema(
+            CreateTransactionSchema(
                 user_id=create_usage.user_id,
                 amount=create_usage.credits_spent,
-                transaction_type=TransactionType.DEBIT,
+                type=TransactionType.DEBIT,
+                status=TransactionStatus.PENDING
             )
         )
         return await UsageDataManager(self.session).add_usage(create_usage)
