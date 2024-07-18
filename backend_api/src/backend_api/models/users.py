@@ -1,8 +1,12 @@
-from sqlmodel import SQLModel, Field
 from pydantic import field_validator, validate_email
+from sqlmodel import Field, SQLModel
+
 
 class UserBase(SQLModel):
-    wallet_address: str = Field(index=True, sa_column_kwargs={"unique": True}, max_length=42)
+    wallet_address: str = Field(
+        index=True, sa_column_kwargs={"unique": True}, max_length=42
+    )
+
 
 class User(UserBase, table=True):
     __tablename__ = "users"  # type: ignore

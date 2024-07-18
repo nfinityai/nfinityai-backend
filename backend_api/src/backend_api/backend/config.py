@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
 
     free_trial_mode: bool = Field(default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE")
-    free_trial_credits: int = Field(default=500, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
+    free_trial_credits: int = Field(default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
 
 
 
