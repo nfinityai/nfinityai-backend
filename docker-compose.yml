@@ -10,8 +10,8 @@ services:
     environment:
       - BACKEND_API_JWT_SECRET=${BACKEND_API_JWT_SECRET}
       - BACKEND_API_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
-      - BACKEND_API_TASK_MANAGER_URL=http://task_manager_api:8000
-      - BACKEND_API_PROVIDER_API_GATEWAY_URL=http://provider_api_gateway:8000
+      - BACKEND_API_PROVIDER_API_URL=http://provider_api_gateway:8000
+      - BACKEND_API_PROVIDER_NAME=replicate
   provider_api_gateway:
     build:
       context: provider_api_gateway/
