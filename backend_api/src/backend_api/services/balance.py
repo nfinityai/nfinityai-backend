@@ -10,6 +10,12 @@ from .base import BaseDataManager, BaseService
 class BalanceService(BaseService[BalanceModel]):
     async def get_balance(self, user_id: int) -> BalanceSchema:
         return await BalanceDataManager(self.session).get_balance(user_id)
+    
+    async def add_amount(self, user_id: int, amount: float):
+        return await BalanceDataManager(self.session).add_amount(user_id, amount)
+
+    async def remove_amount(self, user_id: int, amount: float):
+        return await BalanceDataManager(self.session).remove_amount(user_id, amount)
 
 
 class BalanceDataManager(BaseDataManager[BalanceModel]):
@@ -19,7 +25,7 @@ class BalanceDataManager(BaseDataManager[BalanceModel]):
         model = await self.get_one(stmt)
         return BalanceSchema(**model.model_dump())
     
-    async def add_amount(self, user_id: int, amount: int):
+    async def add_amount(self, user_id: int, amount: float):
         stmt = select(BalanceModel).where(BalanceModel.user_id == user_id)
         model = await self.get_one(stmt)
 
@@ -32,7 +38,7 @@ class BalanceDataManager(BaseDataManager[BalanceModel]):
         await self.session.commit()
         await self.session.refresh(model)
 
-    async def remove_amount(self, user_id: int, amount: int):
+    async def remove_amount(self, user_id: int, amount: float):
         stmt = select(BalanceModel).where(BalanceModel.user_id == user_id)
         model = await self.get_one(stmt)
 
