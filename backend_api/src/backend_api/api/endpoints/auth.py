@@ -21,8 +21,6 @@ async def verify_message(
     verify: Annotated[VerifyModel, Depends(verify_siwe_message)],
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    user = CreateUserSchema(address=verify.address)
+    user = await auth_service.get_or_add_user(CreateUserSchema(wallet_address=verify.address))
 
-    user = await auth_service.get_or_add_user(user)
-
-    return await auth_service.authenticate(user.address)
+    return await auth_service.authenticate(user.wallet_address)

@@ -35,11 +35,11 @@ def decode_jwt(token: str, settings: Settings) -> Dict:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-def create_siwe_message(wallet_address: str):
+def create_siwe_message(wallet_address: str, statement="Sign in with Ethereum") -> SiweMessage:
     return SiweMessage(
         domain="example.com",
         address=Web3.to_checksum_address(wallet_address),
-        statement="Sign in with Ethereum",
+        statement=statement,
         uri="http://localhost:8000",
         version=VersionEnum.one,
         chain_id=1,

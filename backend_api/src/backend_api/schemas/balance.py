@@ -1,13 +1,22 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+from siwe import SiweMessage
 
 from backend_api.models.balance import TransactionStatus, TransactionType
+
+
+class SiweBalanceModel(BaseModel):
+    message: SiweMessage
 
 
 class Balance(BaseModel):
     user_id: int
     amount: float
+
+
+class CreateBalance(BaseModel):
+    user_id: int
 
 
 class BalanceModel(BaseModel):

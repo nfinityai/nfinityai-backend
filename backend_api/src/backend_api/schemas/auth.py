@@ -13,7 +13,7 @@ class VerifyModel(BaseModel):
 
 
 class PayloadModel(BaseModel):
-    address: str
+    wallet_address: str
 
 
 class TokenModel(BaseModel):

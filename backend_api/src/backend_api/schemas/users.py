@@ -3,12 +3,12 @@ from pydantic import BaseModel
 
 class User(BaseModel):
     id: int
-    address: str
+    wallet_address: str
 
 
 class UserModel(BaseModel):
-    address: str
+    wallet_address: str
 
 
 class CreateUser(BaseModel):
-    address: str
+    wallet_address: str

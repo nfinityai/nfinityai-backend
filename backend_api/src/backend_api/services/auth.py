@@ -1,14 +1,23 @@
-from typing_extensions import Annotated
-
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import select
+from typing_extensions import Annotated
 
 from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.session import AsyncSession, get_session
 from backend_api.models.users import User as UserModel
 from backend_api.schemas.auth import PayloadModel, TokenModel
-from backend_api.schemas.users import User as UserSchema, UserModel as UserModelSchema, CreateUser as CreateUserSchema
+from backend_api.schemas.balance import CreateBalance as CreateBalanceSchema
+from backend_api.schemas.users import (
+    CreateUser as CreateUserSchema,
+)
+from backend_api.schemas.users import (
+    User as UserSchema,
+)
+from backend_api.schemas.users import (
+    UserModel as UserModelSchema,
+)
+from backend_api.services.balance import BalanceService, get_balance_service
 from backend_api.services.users import UserService, get_user_service
 from backend_api.utils import create_jwt, decode_jwt
 
@@ -23,13 +32,19 @@ auth_schema = JWTBearer()
 
 
 class AuthService(BaseService[UserModel]):
-    def __init__(self, session: AsyncSession, settings: Settings) -> None:
+    def __init__(
+        self, session: AsyncSession, settings: Settings, balance_service: BalanceService
+    ) -> None:
         super().__init__(session)
         self.settings = settings
+        self.balance_service = balance_service
 
-    async def get_or_add_user(self, user: CreateUserSchema) -> UserSchema:
-        user_model = UserModel(**user.model_dump())
-        return await AuthDatamanager(self.session).get_or_add_user(user_model)
+    async def get_or_add_user(self, create_user: CreateUserSchema) -> UserSchema:
+        user_model = UserModel(**create_user.model_dump())
+        user = await AuthDatamanager(self.session).get_or_add_user(user_model)
+        await self.balance_service.create_balance(CreateBalanceSchema(user_id=user.id))
+
+        return user
 
     async def create_user(self, user: CreateUserSchema) -> None:
         user_model = UserModel(**user.model_dump())
@@ -41,7 +56,7 @@ class AuthService(BaseService[UserModel]):
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
 
-        payload = PayloadModel(address=address)
+        payload = PayloadModel(wallet_address=address)
         access_token = create_jwt(payload.model_dump(), self.settings)
 
         return TokenModel(access_token=access_token)
@@ -76,11 +91,12 @@ async def get_current_user(
 
     payload = decode_jwt(credentials.credentials, settings=get_settings())
 
-    return await user_service.get_user(UserModelSchema(**payload).address)
+    return await user_service.get_user(UserModelSchema(**payload).wallet_address)
 
 
 def get_auth_service(
     session: Annotated[AsyncSession, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
+    balance_service: Annotated[BalanceService, Depends(get_balance_service)],
 ):
-    return AuthService(session, settings)
+    return AuthService(session, settings, balance_service)
