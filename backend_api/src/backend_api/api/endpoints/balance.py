@@ -40,7 +40,7 @@ async def get_balance(
     return BalanceModelSchema(**balance.model_dump())
 
 
-@router.get("/balance/popup", response_model=BalanceModelSchema)
+@router.post("/balance/popup", response_model=BalanceModelSchema)
 async def popup_balance(
     amount: float,
     current_user: UserSchema = Depends(get_current_user),
