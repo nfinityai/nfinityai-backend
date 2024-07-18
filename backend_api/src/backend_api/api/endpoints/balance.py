@@ -1,6 +1,8 @@
+from typing_extensions import Annotated
 from fastapi import APIRouter, Depends
 
 from backend_api.models.balance import TransactionType
+from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.balance import (
     BalanceModel as BalanceModelSchema,
 )
@@ -14,7 +16,7 @@ from backend_api.schemas.users import User as UserSchema
 from backend_api.services.auth import get_current_user
 from backend_api.services.balance import BalanceService, get_balance_service
 from backend_api.services.transaction import TransactionService, get_transaction_service
-from backend_api.utils import create_siwe_message
+from backend_api.utils import create_siwe_message, verify_siwe_message
 
 router = APIRouter()
 
@@ -43,6 +45,7 @@ async def get_balance(
 @router.post("/balance/popup", response_model=BalanceModelSchema)
 async def popup_balance(
     amount: float,
+    verify: Annotated[VerifyModel, Depends(verify_siwe_message)],
     current_user: UserSchema = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
     balance_service: BalanceService = Depends(get_balance_service),
