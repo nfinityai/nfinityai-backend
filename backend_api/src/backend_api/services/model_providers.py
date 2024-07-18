@@ -19,6 +19,7 @@ from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsyncStatus,
     ModelProviderModelRunResult,
 )
+from backend_api.services.usage import UsageService, get_usage_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,15 @@ async def on_request_end(session, trace_config_ctx, params):
 
 
 class ModelProviderService:
-    def __init__(self, settings: Settings, client: aiohttp_retry.RetryClient) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        client: aiohttp_retry.RetryClient,
+        usage_service: UsageService,
+    ) -> None:
         self.api_url = settings.provider_api_url
         self.client = client
+        self.usage_service = usage_service
 
     async def __aenter__(self):
         await self.client.__aenter__()
@@ -97,7 +104,7 @@ class ModelProviderService:
                 raise ModelProviderException("Error while listing categories")
             data = await response.json()
         return ModelProviderModelRunAsync(**data)
-    
+
     async def run_model_async_status(
         self, job_id: str
     ) -> ModelProviderModelRunAsyncStatus:
@@ -121,8 +128,10 @@ class ModelProviderService:
             data = await response.json()
 
         return ModelProviderModelRunAsyncResult(**data)
-    
-    async def get_model_costs(self, provider: str, model: str) -> ModelProviderModelCosts:
+
+    async def get_model_costs(
+        self, provider: str, model: str
+    ) -> ModelProviderModelCosts:
         url = self._build_url(f"/providers/{provider}/models/{model}/info")
         async with self.client.get(url) as response:
             if response.status != HTTPStatus.OK:
@@ -130,7 +139,6 @@ class ModelProviderService:
                 raise ModelProviderException("Error while listing categories")
             data = await response.json()
         return ModelProviderModelCosts(**data)
-
 
     async def get_hardware_costs(self, provider: str) -> ModelProviderHardwareCosts:
         url = self._build_url(f"/providers/{provider}/hardware/costs")
@@ -177,6 +185,7 @@ async def get_retry_client(
 async def get_model_provider_service(
     settings: Annotated[Settings, Depends(get_settings)],
     client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)],
+    usage_service: Annotated[UsageService, Depends(get_usage_service)],
 ):
-    async with ModelProviderService(settings, client) as service:
+    async with ModelProviderService(settings, client, usage_service) as service:
         yield service

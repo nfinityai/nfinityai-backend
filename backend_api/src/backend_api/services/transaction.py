@@ -1,7 +1,9 @@
 
+from fastapi import Depends
+from typing_extensions import Annotated
 from sqlmodel import select
 
-from backend_api.backend.session import AsyncSession
+from backend_api.backend.session import AsyncSession, get_session
 from backend_api.exceptions import BalanceNotFoundError, InsufficientFundsError
 from backend_api.models.balance import (
     Transaction as TransactionModel,
@@ -21,7 +23,7 @@ from backend_api.schemas.balance import (
 from backend_api.schemas.balance import (
     UpdateTransactionFailed as UpdateTransactionFailedSchema,
 )
-from backend_api.services.balance import BalanceService
+from backend_api.services.balance import BalanceService, get_balance_service
 
 from .base import BaseDataManager, BaseService
 
@@ -78,3 +80,12 @@ class TransactionDataManager(BaseDataManager[TransactionModel]):
     ) -> TransactionSchema:
         model = await self.add_one(TransactionModel(**transaction.model_dump()))
         return TransactionSchema(**model.model_dump())
+
+
+async def get_transaction_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    balance_service: Annotated[
+        BalanceService, Depends(get_balance_service)
+    ],
+) -> TransactionService:
+    return TransactionService(session, balance_service)

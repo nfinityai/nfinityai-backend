@@ -1,10 +1,16 @@
+from typing import Annotated
+from fastapi import Depends
 from sqlmodel import select
 
-from backend_api.backend.session import AsyncSession
+from backend_api.backend.session import AsyncSession, get_session
+from backend_api.exceptions.balance import (
+    TransactionFailedError,
+    TransactionUncompletedError,
+)
 from backend_api.models.balance import TransactionStatus, TransactionType
 from backend_api.models.usage import Usage as UsageModel
 from backend_api.schemas.usage import CreateUsage, Usage as UsageSchema
-from backend_api.services.transaction import TransactionService
+from backend_api.services.transaction import TransactionService, get_transaction_service
 from backend_api.schemas.balance import CreateTransaction as CreateTransactionSchema
 
 from .base import BaseDataManager, BaseService
@@ -29,10 +35,15 @@ class UsageService(BaseService[UsageModel]):
                 user_id=create_usage.user_id,
                 amount=create_usage.credits_spent,
                 type=TransactionType.DEBIT,
-                status=TransactionStatus.PENDING
+                status=TransactionStatus.PENDING,
             )
         )
-        return await UsageDataManager(self.session).add_usage(create_usage)
+        if transaction.status == TransactionStatus.COMPLETED:
+            return await UsageDataManager(self.session).add_usage(create_usage)
+        elif transaction.status == TransactionStatus.FAILED:
+            raise TransactionFailedError("Transaction status is failed")
+
+        raise TransactionUncompletedError("Transaction status is uncompleted")
 
 
 class UsageDataManager(BaseDataManager[UsageModel]):
@@ -51,3 +62,12 @@ class UsageDataManager(BaseDataManager[UsageModel]):
     async def add_usage(self, usage: CreateUsage) -> UsageSchema:
         model = await self.add_one(UsageModel(**usage.model_dump()))
         return UsageSchema(**model.model_dump())
+
+
+async def get_usage_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    transaction_service: Annotated[
+        TransactionService, Depends(get_transaction_service)
+    ],
+) -> UsageService:
+    return UsageService(session, transaction_service)

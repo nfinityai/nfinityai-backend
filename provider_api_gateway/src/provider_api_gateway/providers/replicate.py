@@ -91,20 +91,19 @@ class ReplicateClient(BaseProvider, Client):
         if model_version is not None:
             model = f"{model}:{model_version}"
         logger.info("Running model", model=model, input=input_params)
-        output, execution_time = await self._run_model(model, input_params)
+        (output, error), execution_time = await self._run_model(model, input_params)  # type: ignore
         logger.info(
             "Model finished", model=model, execution_time=execution_time, output=output
         )
-        return output  # type: ignore
+        return RunResultModel(output=output, error=error, metrics={'predict_time': execution_time})
 
     @measured
     async def _run_model(self, ref: Any, input: dict, **kwargs):
         try:
-            output = await self.async_run(ref, input=input, **kwargs)
-            return RunResultModel(output=output)
+            return await self.async_run(ref, input=input, **kwargs), None
         except ReplicateModelError as e:
             logger.error("Unable to get result", model=ref, input=input, error=e)
-            return RunResultModel(error=str(e))
+            return None, str(e)
 
     # async model run
 
