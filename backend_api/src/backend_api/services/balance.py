@@ -1,46 +1,46 @@
 from sqlmodel import select
 
 from backend_api.exceptions import BalanceNotFoundError, InsufficientFundsError
-from backend_api.models.balance import Credit as CreditModel
-from backend_api.schemas.balance import Credit as CreditSchema
+from backend_api.models.balance import Balance as BalanceModel
+from backend_api.schemas.balance import Balance as BalanceSchema
 
 from .base import BaseDataManager, BaseService
 
 
-class CreditService(BaseService[CreditModel]):
-    async def get_balance(self, address: str) -> CreditSchema:
-        return await CreditDataManager(self.session).get_balance(address)
+class BalanceService(BaseService[BalanceModel]):
+    async def get_balance(self, user_id: int) -> BalanceSchema:
+        return await BalanceDataManager(self.session).get_balance(user_id)
 
 
-class CreditDataManager(BaseDataManager[CreditModel]):
-    async def get_balance(self, address: str) -> CreditSchema:
-        stmt = select(CreditModel).where(CreditModel.user_id == address)
+class BalanceDataManager(BaseDataManager[BalanceModel]):
+    async def get_balance(self, user_id: int) -> BalanceSchema:
+        stmt = select(BalanceModel).where(BalanceModel.user_id == user_id)
 
         model = await self.get_one(stmt)
-        return CreditSchema(**model.model_dump())
+        return BalanceSchema(**model.model_dump())
     
-    async def add_credits(self, address: str, amount: int):
-        stmt = select(CreditModel).where(CreditModel.user_id == address)
+    async def add_amount(self, user_id: int, amount: int):
+        stmt = select(BalanceModel).where(BalanceModel.user_id == user_id)
         model = await self.get_one(stmt)
 
         if not model:
-            model = CreditModel(user_id=address, balance=amount)
+            model = BalanceModel(user_id=user_id, amount=amount)
             await self.add_one(model)
         else:
-            model.balance += amount
+            model.amount += amount
 
         await self.session.commit()
         await self.session.refresh(model)
 
-    async def remove_credits(self, address: str, amount: int):
-        stmt = select(CreditModel).where(CreditModel.user_id == address)
+    async def remove_amount(self, user_id: int, amount: int):
+        stmt = select(BalanceModel).where(BalanceModel.user_id == user_id)
         model = await self.get_one(stmt)
 
         if not model:
             raise BalanceNotFoundError("Unable to remove funds")
         
-        model.balance -= amount
-        if model.balance < 0:
+        model.amount -= amount
+        if model.amount < 0:
             raise InsufficientFundsError("Insufficient balance")
 
         await self.session.commit()
