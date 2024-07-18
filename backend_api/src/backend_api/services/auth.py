@@ -8,7 +8,8 @@ from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.session import AsyncSession, get_session
 from backend_api.models.users import User as UserModel
 from backend_api.schemas.auth import PayloadModel, TokenModel
-from backend_api.schemas.users import User as UserSchema, CreateUser as CreateUserSchema
+from backend_api.schemas.users import User as UserSchema, UserModel as UserModelSchema, CreateUser as CreateUserSchema
+from backend_api.services.users import UserService, get_user_service
 from backend_api.utils import create_jwt, decode_jwt
 
 from .base import BaseDataManager, BaseService
@@ -29,7 +30,6 @@ class AuthService(BaseService[UserModel]):
     async def get_or_add_user(self, user: CreateUserSchema) -> UserSchema:
         user_model = UserModel(**user.model_dump())
         return await AuthDatamanager(self.session).get_or_add_user(user_model)
-
 
     async def create_user(self, user: CreateUserSchema) -> None:
         user_model = UserModel(**user.model_dump())
@@ -56,7 +56,7 @@ class AuthDatamanager(BaseDataManager[UserModel]):
 
         model = await self.get_one(stmt)
         return UserSchema(**model.model_dump()) if model is not None else None
-    
+
     async def get_or_add_user(self, user: UserModel) -> UserSchema:
         user_model = await self.get_user(user.wallet_address)
 
@@ -67,14 +67,16 @@ class AuthDatamanager(BaseDataManager[UserModel]):
         return user_model
 
 
-def get_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(auth_schema)]) -> UserSchema | None:
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(auth_schema)],
+    user_service: Annotated[UserService, Depends(get_user_service)],
+) -> UserSchema | None:
     if credentials is None or credentials.credentials is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     payload = decode_jwt(credentials.credentials, settings=get_settings())
 
-    return UserSchema(**payload)
-
+    return await user_service.get_user(UserModelSchema(**payload).address)
 
 
 def get_auth_service(

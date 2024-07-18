@@ -11,6 +11,7 @@ from backend_api.schemas.model_providers import (
 from backend_api.schemas.model_providers import (
     ModelProviderModelList as ModelProviderModelSchemaList,
 )
+from backend_api.schemas.users import User as UserSchema
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunResult as ModelProviderModelRunResultSchema,
 )
@@ -51,6 +52,7 @@ async def run_model(
     run_query: ModelRunQuery,
     model_provider_service: ModelProviderService = Depends(get_model_provider_service),
     settings: Settings = Depends(get_settings),
+    user: UserSchema = Depends(get_current_user),
     version: str | None = None,
 ):
     return await model_provider_service.run_model(

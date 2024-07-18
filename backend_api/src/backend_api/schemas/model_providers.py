@@ -40,6 +40,7 @@ class ModelProviderModelList(BaseModel):
 class ModelProviderModelRunResultModel(BaseModel):
     error: str | None
     output: Any | None
+    elapsed_time: float | None
 
 
 class ModelProviderModelRunResult(BaseModel):

@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 import time
 from http import HTTPStatus
@@ -9,6 +10,8 @@ from fastapi import Depends
 from typing_extensions import Annotated
 
 from backend_api.backend.config import Settings, get_settings
+from backend_api.schemas.usage import CreateUsage
+from backend_api.schemas.users import User as UserSchema
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList,
     ModelProviderHardwareCosts,
@@ -45,6 +48,7 @@ class ModelProviderService:
         usage_service: UsageService,
     ) -> None:
         self.api_url = settings.provider_api_url
+        self.settings = settings
         self.client = client
         self.usage_service = usage_service
 
@@ -140,6 +144,7 @@ class ModelProviderService:
             data = await response.json()
         return ModelProviderModelCosts(**data)
 
+    @lru_cache
     async def get_hardware_costs(self, provider: str) -> ModelProviderHardwareCosts:
         url = self._build_url(f"/providers/{provider}/hardware/costs")
         async with self.client.get(url) as response:
@@ -148,6 +153,28 @@ class ModelProviderService:
                 raise ModelProviderException("Error while listing categories")
             data = await response.json()
         return ModelProviderHardwareCosts(**data)
+    
+    async def _calculate_cost(self, provider: str, model: str, elapsed_time: float | None) -> float:
+        model_costs = await self.get_model_costs(provider, model)
+        if elapsed_time is None:
+            elapsed_time = model_costs.info.prediction_time
+        hardware_costs = await self.get_hardware_costs(provider)
+        for hardware in filter(lambda x: x.sku == model_costs.info.sku, hardware_costs.info):
+            cost = hardware.price_per_second * elapsed_time
+            return cost
+        return self.settings.default_model_cost
+        
+    async def _build_usage(self, provider: str, model:str, user: UserSchema, elapsed_time: float | None, signature: str):
+        cost = await self._calculate_cost(provider, model, elapsed_time)
+        return CreateUsage(
+            user_id=user.id,
+            credits_spent=cost,
+            request_signature=signature
+        )
+    
+    async def track_usage(self, usage: CreateUsage):
+        return await self.usage_service.create_usage(usage)
+
 
 
 def get_retry_options(

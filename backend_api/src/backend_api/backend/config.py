@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     free_trial_mode: bool = Field(default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE")
     free_trial_credits: int = Field(default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
 
+    default_model_cost: float = Field(default=2, validation_alias="BACKEND_API_DEFAULT_MODEL_COST")
 
 
 @lru_cache
