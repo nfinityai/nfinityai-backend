@@ -7,6 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="BACKEND_API_", case_sensitive=False)
 
+    secret_key: str = Field(validation_alias="BACKEND_API_SECRET_KEY")
+
     jwt_secret_key: str = Field(validation_alias="BACKEND_API_JWT_SECRET")
     jwt_algorithm: str = "HS256"
     jwt_access_token_expires_in: int = 1440
@@ -23,6 +25,9 @@ class Settings(BaseSettings):
     free_trial_credits: int = Field(default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
 
     default_model_cost: float = Field(default=2, validation_alias="BACKEND_API_DEFAULT_MODEL_COST")
+
+    admin_username: str = Field(validation_alias="BACKEND_API_ADMIN_USERNAME")
+    admin_password: str = Field(validation_alias="BACKEND_API_ADMIN_PASSWORD")
 
 
 @lru_cache
