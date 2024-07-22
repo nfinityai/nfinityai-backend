@@ -1,12 +1,12 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends
 
-from backend_api.api.endpoints.model_providers import ModelRunQuery
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsync,
     ModelProviderModelRunAsyncResult,
     ModelProviderModelRunAsyncStatus,
+    ModelRunQuery,
 )
 from backend_api.schemas.runs import SiweRunModel
 from backend_api.schemas.users import User as UserSchema

@@ -1,9 +1,11 @@
 from datetime import datetime
-from os import cpu_count
 from typing import Any
 
-from numpy import info
 from pydantic import BaseModel, Field
+
+
+class ModelRunQuery(BaseModel):
+    input: dict
 
 
 class ModelProviderCategory(BaseModel):

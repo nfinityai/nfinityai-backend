@@ -2,13 +2,13 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from backend_api.api.endpoints.model_providers import ModelRunQuery
 from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.logging import get_logger
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsync,
     ModelProviderModelRunResult,
+    ModelRunQuery,
 )
 from backend_api.schemas.usage import CreateUsage
 from backend_api.schemas.users import User as UserSchema
