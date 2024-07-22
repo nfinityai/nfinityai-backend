@@ -1,5 +1,7 @@
 from datetime import datetime
 from sqlmodel import SQLModel, Field
+from starlette_admin.contrib.sqla import ModelView
+from backend_api.admin import site
 
 
 class Category(SQLModel, table=True):
@@ -12,3 +14,5 @@ class Category(SQLModel, table=True):
     is_active: bool = Field(default=False, nullable=False)
 
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+
+site.add_view(ModelView(Category))

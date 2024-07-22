@@ -1,5 +1,7 @@
 from datetime import datetime
 from sqlmodel import SQLModel, Field, JSON, Column
+from starlette_admin.contrib.sqla import ModelView
+from backend_api.admin import site
 
 
 class Model(SQLModel, table=True):
@@ -22,3 +24,5 @@ class Model(SQLModel, table=True):
 
     class Config:
         arbitrary_types_allowed = True
+
+site.add_view(ModelView(Model))

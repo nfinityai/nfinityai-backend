@@ -10,6 +10,7 @@ from backend_api.api.router import api_router
 from backend_api.backend.logging import configure_logging, get_logger
 from backend_api.backend.tasks import scheduler
 from backend_api import tasks  # noqa: F401
+from backend_api.admin import site
 
 configure_logging()
 logger = get_logger(__name__)
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Backend API", version="0.0.1", lifespan=lifespan)
+site.mount_to(app)
 
 app.add_middleware(
     CORSMiddleware,
