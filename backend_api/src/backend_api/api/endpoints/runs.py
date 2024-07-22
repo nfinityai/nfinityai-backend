@@ -1,8 +1,7 @@
 from typing_extensions import Annotated
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
 
-from backend_api.backend.config import Settings, get_settings
+from backend_api.api.endpoints.model_providers import ModelRunQuery
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsync,
@@ -15,17 +14,10 @@ from backend_api.schemas.model_providers import (
     ModelProviderModelRunResult as ModelProviderModelRunResultSchema,
 )
 from backend_api.services.auth import get_current_user
-from backend_api.services.model_providers import (
-    ModelProviderService,
-    get_model_provider_service,
-)
+from backend_api.services.runs import RunService, get_run_service
 from backend_api.utils import create_siwe_message, verify_siwe_message
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
-
-
-class ModelRunQuery(BaseModel):
-    input: dict
 
 
 @router.get("/{model}/message", response_model=SiweRunModel)
@@ -45,20 +37,13 @@ async def run_model(
     model: str,
     run_query: ModelRunQuery,
     verify: Annotated[VerifyModel, Depends(verify_siwe_message)],
-    model_provider_service: ModelProviderService = Depends(get_model_provider_service),
-    settings: Settings = Depends(get_settings),
+    run_service: RunService = Depends(get_run_service),
     user: UserSchema = Depends(get_current_user),
     version: str | None = None,
 ):
-    run = await model_provider_service.run_model(
-        settings.provider, model, run_query.input, version
+    return await run_service.run_model(
+        user, verify, model, run_query, version
     )
-    # track usage
-    await model_provider_service.track_usage(
-        settings.provider, model, user, run.result.elapsed_time, verify.signature
-    )
-
-    return run
 
 
 @router.post("/async/{model}", response_model=ModelProviderModelRunAsync)
@@ -66,33 +51,26 @@ async def run_model_async(
     model: str,
     run_query: ModelRunQuery,
     verify: Annotated[VerifyModel, Depends(verify_siwe_message)],
-    model_provider_service: ModelProviderService = Depends(get_model_provider_service),
-    settings: Settings = Depends(get_settings),
+    run_service: RunService = Depends(get_run_service),
     user: UserSchema = Depends(get_current_user),
     version: str | None = None,
 ):
-    run = await model_provider_service.run_model_async(
-        settings.provider, model, run_query.input, version
+    return await run_service.run_model_async(
+        user, verify, model, run_query, version
     )
-    # track usage
-    await model_provider_service.track_usage(
-        settings.provider, model, user, elapsed_time=None, signature=verify.signature
-    )
-
-    return run
 
 
 @router.get("/{run_id}/status", response_model=ModelProviderModelRunAsyncStatus)
 async def get_run_status(
     run_id: str,
-    model_provider_service: ModelProviderService = Depends(get_model_provider_service),
+    run_service: RunService = Depends(get_run_service),
 ):
-    return await model_provider_service.run_model_async_status(run_id)
+    return await run_service.get_run_status(run_id)
 
 
 @router.get("/{run_id}/result", response_model=ModelProviderModelRunAsyncResult)
 async def get_run_result(
     run_id: str,
-    model_provider_service: ModelProviderService = Depends(get_model_provider_service),
+    run_service: RunService = Depends(get_run_service),
 ):
-    return await model_provider_service.run_model_async_result(run_id)
+    return await run_service.get_run_result(run_id)

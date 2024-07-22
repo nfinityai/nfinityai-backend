@@ -10,8 +10,6 @@ from fastapi import Depends
 from typing_extensions import Annotated
 
 from backend_api.backend.config import Settings, get_settings
-from backend_api.schemas.usage import CreateUsage
-from backend_api.schemas.users import User as UserSchema
 from backend_api.schemas.model_providers import (
     ModelProviderCategoryList,
     ModelProviderHardwareCosts,
@@ -22,7 +20,6 @@ from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsyncStatus,
     ModelProviderModelRunResult,
 )
-from backend_api.services.usage import UsageService, get_usage_service
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +41,23 @@ class ModelProviderService:
     def __init__(
         self,
         settings: Settings,
-        client: aiohttp_retry.RetryClient,
-        usage_service: UsageService,
     ) -> None:
         self.api_url = settings.provider_api_url
         self.settings = settings
-        self.client = client
-        self.usage_service = usage_service
+        self.init_client()
+
+    def init_client(self):
+        trace_config = aiohttp.TraceConfig()
+        trace_config.on_request_start.append(on_request_start)
+        trace_config.on_request_end.append(on_request_end)
+        session = aiohttp.ClientSession(trace_configs=[trace_config])
+        retry_options = aiohttp_retry.ExponentialRetry(
+            attempts=self.settings.provider_api_retry_attempts,
+            factor=self.settings.provider_api_factor,
+        )
+        self.client = aiohttp_retry.RetryClient(
+            client_session=session, retry=retry_options
+        )
 
     async def __aenter__(self):
         await self.client.__aenter__()
@@ -154,73 +161,9 @@ class ModelProviderService:
             data = await response.json()
         return ModelProviderHardwareCosts(**data)
 
-    async def _calculate_cost(
-        self, provider: str, model: str, elapsed_time: float | None
-    ) -> float:
-        model_costs = await self.get_model_costs(provider, model)
-        if elapsed_time is None:
-            elapsed_time = model_costs.info.prediction_time
-        hardware_costs = await self.get_hardware_costs(provider)
-        for hardware in filter(
-            lambda x: x.sku == model_costs.info.sku, hardware_costs.info
-        ):
-            cost = hardware.price_per_second * elapsed_time
-            return cost
-        return self.settings.default_model_cost
-
-    async def track_usage(
-        self,
-        provider: str,
-        model: str,
-        user: UserSchema,
-        elapsed_time: float | None,
-        signature: str,
-    ):
-        return await self.usage_service.create_usage(
-            CreateUsage(
-                user_id=user.id,
-                credits_spent=await self._calculate_cost(provider, model, elapsed_time),
-                request_signature=signature,
-            )
-        )
-
-
-def get_retry_options(
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> aiohttp_retry.ExponentialRetry:
-    return aiohttp_retry.ExponentialRetry(
-        attempts=settings.provider_api_retry_attempts,
-        factor=settings.provider_api_factor,
-    )
-
-
-def get_trace_configs() -> list[aiohttp.TraceConfig]:
-    trace_config = aiohttp.TraceConfig()
-    trace_config.on_request_start.append(on_request_start)
-    trace_config.on_request_end.append(on_request_end)
-
-    return [trace_config]
-
-
-async def get_session(
-    trace_configs: Annotated[list[aiohttp.TraceConfig], Depends(get_trace_configs)],
-) -> aiohttp.ClientSession:
-    return aiohttp.ClientSession(trace_configs=trace_configs)
-
-
-async def get_retry_client(
-    session: Annotated[aiohttp.ClientSession, Depends(get_session)],
-    retry_options: Annotated[
-        aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)
-    ],
-) -> aiohttp_retry.RetryClient:
-    return aiohttp_retry.RetryClient(client_session=session, retry=retry_options)
-
 
 async def get_model_provider_service(
     settings: Annotated[Settings, Depends(get_settings)],
-    client: Annotated[aiohttp_retry.RetryClient, Depends(get_retry_client)],
-    usage_service: Annotated[UsageService, Depends(get_usage_service)],
 ):
-    async with ModelProviderService(settings, client, usage_service) as service:
+    async with ModelProviderService(settings) as service:
         yield service
