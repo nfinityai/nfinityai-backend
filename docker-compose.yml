@@ -8,10 +8,13 @@ services:
     ports:
       - "${BACKEND_API_PORT:-8000}:8000"
     environment:
+      - BACKEND_API_SECRET_KEY=${BACKEND_API_SECRET_KEY}
       - BACKEND_API_JWT_SECRET=${BACKEND_API_JWT_SECRET}
       - BACKEND_API_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
       - BACKEND_API_PROVIDER_API_URL=http://provider_api_gateway:8000
       - BACKEND_API_PROVIDER_NAME=replicate
+      - BACKEND_API_ADMIN_USERNAME=${BACKEND_API_ADMIN_USERNAME}
+      - BACKEND_API_ADMIN_PASSWORD=${BACKEND_API_ADMIN_PASSWORD}
   provider_api_gateway:
     build:
       context: provider_api_gateway/
@@ -22,8 +25,8 @@ services:
       - REPLICATE_API_TOKEN=${PROVIDER_REPLICATE_API_TOKEN}
   db:
     image: postgres:12
-    ports:
-      - "${DB_PORT:-5432}:5432"
+    expose:
+      - 5432
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
