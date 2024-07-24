@@ -1,3 +1,4 @@
+from datetime import datetime
 from backend_api.backend.session import get_session
 from backend_api.backend.tasks import scheduler
 from backend_api.schemas.categories import CreateCategory
@@ -14,7 +15,7 @@ async def _get_categories() -> ModelProviderCategoryList:
         return await service.list_categories()
 
 
-@scheduler.scheduled_job('interval', weeks=1)
+@scheduler.scheduled_job('interval', weeks=1, next_run_time=datetime.now())
 async def update_categories():
     async for session in get_session():
         service: CategoryService = await get_category_service(session)
