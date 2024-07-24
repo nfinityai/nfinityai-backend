@@ -11,6 +11,7 @@ from backend_api.schemas.categories import (
 )
 from backend_api.schemas.categories import (
     CreateCategory as CreateCategorySchema,
+    CategoryList as CategoryListSchema
 )
 from backend_api.services.base import BaseDataManager, BaseService
 
@@ -27,8 +28,9 @@ class CategoryService(BaseService[Category]):
     async def add_category(self, category: CreateCategorySchema) -> CategorySchema:
         return await CategoryManager(self.session).add_category(category)
 
-    async def list_categories(self) -> list[CategorySchema]:
-        return await CategoryManager(self.session).list_active_categories()
+    async def list_categories(self) -> CategoryListSchema:
+        categories = await CategoryManager(self.session).list_active_categories()
+        return CategoryListSchema(categories=categories)
 
 
 class CategoryManager(BaseDataManager[Category]):
