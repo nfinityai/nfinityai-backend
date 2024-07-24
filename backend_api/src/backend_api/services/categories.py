@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class CategoryService(BaseService[Category]):
-    async def get_category(self, category_id: int) -> CategorySchema:
+    async def get_category(self, category_id: int) -> CategorySchema | None:
         return await CategoryManager(self.session).get_category(category_id)
 
     async def get_category_by_slug(self, category_slug: str) -> CategorySchema | None:
@@ -34,11 +34,11 @@ class CategoryService(BaseService[Category]):
 
 
 class CategoryManager(BaseDataManager[Category]):
-    async def get_category(self, category_id: int) -> CategorySchema:
+    async def get_category(self, category_id: int) -> CategorySchema | None:
         stmt = select(Category).where(Category.id == category_id)
 
         model = await self.get_one(stmt)
-        return CategorySchema(**model.model_dump())
+        return CategorySchema(**model.model_dump()) if model else None
 
     async def get_category_by_slug(self, category_slug: str) -> CategorySchema | None:
         stmt = select(Category).where(Category.slug == category_slug)
