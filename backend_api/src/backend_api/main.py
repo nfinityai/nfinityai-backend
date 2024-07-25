@@ -11,6 +11,7 @@ from backend_api.backend.logging import configure_logging, get_logger
 from backend_api.backend.tasks import scheduler
 from backend_api import tasks  # noqa: F401
 from backend_api.admin import site
+from backend_api.cache import init_cache
 
 configure_logging()
 logger = get_logger(__name__)
@@ -18,6 +19,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_cache()
     scheduler.start()
     yield
     scheduler.shutdown()

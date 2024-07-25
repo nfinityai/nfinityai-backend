@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from siwe import SiweMessage
 
+from backend_api.backend.config import get_settings
 from backend_api.models.balance import TransactionStatus, TransactionType
 
 
@@ -21,6 +22,18 @@ class CreateBalance(BaseModel):
 
 class BalanceModel(BaseModel):
     amount: float
+
+
+class BalancePopupModel(BaseModel):
+
+    @computed_field@property
+    def time_to_pay_minutes(self) -> int:
+        return get_settings().time_to_pay_minutes
+    
+    @computed_field
+    @property
+    def address(self) -> str:
+        return get_settings().contract_address
 
 
 class CreateTransaction(BaseModel):

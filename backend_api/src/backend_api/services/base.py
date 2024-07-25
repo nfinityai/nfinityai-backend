@@ -37,6 +37,7 @@ class BaseDataManager(SessionMixin, Generic[T]):
 
     async def add_all(self, models: Sequence[T]) -> None:
         self.session.add_all(models)
+        await self.session.commit()
 
     async def get_one(self, select_stmt: Executable) -> T:
         return await self.session.scalar(select_stmt)

@@ -1,8 +1,14 @@
 from functools import lru_cache
+import json
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+@lru_cache
+def _get_contract_abi():
+    with open("backend/data/contract_abi.json") as f:
+        return json.load(f)
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="BACKEND_API_", case_sensitive=False)
@@ -20,7 +26,6 @@ class Settings(BaseSettings):
 
     provider: str = Field(validation_alias="BACKEND_API_PROVIDER_NAME")
 
-
     free_trial_mode: bool = Field(default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE")
     free_trial_credits: int = Field(default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
 
@@ -28,6 +33,14 @@ class Settings(BaseSettings):
 
     admin_username: str = Field(validation_alias="BACKEND_API_ADMIN_USERNAME")
     admin_password: str = Field(validation_alias="BACKEND_API_ADMIN_PASSWORD")
+
+    contract_address: str = Field(validation_alias="BACKEND_API_CONTRACT_ADDRESS")
+    contract_abi: list = Field(default_factory=_get_contract_abi)
+
+    infura_base_url: str = Field(validation_alias="BACKEND_API_INFURA_BASE_URL")
+    coingecko_api_key: str = Field(validation_alias="BACKEND_API_COINGECKO_API_KEY")
+
+    time_to_pay_minutes: int = Field(default=15, validation_alias="BACKEND_API_TIME_TO_PAY_MINUTES")
 
 
 @lru_cache
