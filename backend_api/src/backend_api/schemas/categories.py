@@ -6,6 +6,7 @@ class Category(BaseModel):
     name: str
     slug: str
     description: str
+    is_active: bool
 
 
 class CategoryList(BaseModel):

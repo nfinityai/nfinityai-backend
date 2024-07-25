@@ -8,7 +8,6 @@ from backend_api.services.model_providers import ModelProviderService
 from backend_api.backend.config import get_settings
 
 
-
 async def _get_categories() -> ModelProviderCategoryList:
     settings = get_settings()
     async with ModelProviderService(settings) as service:
