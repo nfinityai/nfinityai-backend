@@ -3,9 +3,12 @@ import aiohttp
 import aiohttp_retry
 from fastapi import Depends
 from backend_api.backend.config import Settings, get_settings
+from aiocache import cached
 
 
 from enum import Enum
+
+from backend_api.models.balance import CurrencyToPayEnum
 
 
 class TokenToCoinIDEnum(str, Enum):
@@ -14,6 +17,13 @@ class TokenToCoinIDEnum(str, Enum):
 
     def __str__(self) -> str:
         return self.value
+    
+    @classmethod
+    def from_currency_to_pay(cls, currency_to_pay: CurrencyToPayEnum):
+        if currency_to_pay == CurrencyToPayEnum.ETH:
+            return TokenToCoinIDEnum.ETH
+        elif currency_to_pay == CurrencyToPayEnum.USDT:
+            return TokenToCoinIDEnum.USDT
 
 
 class CoingeckoService:
@@ -37,6 +47,7 @@ class CoingeckoService:
     async def __aexit__(self, *args, **kwargs):
         await self.client.__aexit__(*args, **kwargs)
 
+    @cached(ttl=60 * 5)
     async def get_price(self, coin_id: TokenToCoinIDEnum, vs_currency="usd") -> float:
         url = f"{self.BASE_API_URL}/simple/price?ids={coin_id}&vs_currencies={vs_currency}"
 

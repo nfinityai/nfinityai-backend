@@ -2,7 +2,9 @@ from datetime import datetime
 from sqlmodel import SQLModel, Field, JSON, Column
 
 
-class Web3Event(SQLModel):
+class Web3Event(SQLModel, table=True):
+    __tablename__ = "web3_events"  # type: ignore
+
     event_id: str = Field(default=None, primary_key=True)
     block_number: int = Field(nullable=False)
     transaction_hash: str = Field(nullable=False)

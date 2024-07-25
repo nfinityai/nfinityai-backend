@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 @lru_cache
 def _get_contract_abi():
-    with open("backend/data/contract_abi.json") as f:
+    with open("./data/contract_abi.json") as f:
         return json.load(f)
 
 class Settings(BaseSettings):

@@ -38,3 +38,27 @@ class Transaction(SQLModel, table=True):
     status: TransactionStatus = Field(default=TransactionStatus.PENDING, nullable=False)
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
     finished_at: datetime = Field(default=None, nullable=True)
+
+
+class CurrencyToPayEnum(str, Enum):
+    ETH = "ETH"
+    USDT = "USDT"
+
+    @classmethod
+    def get_list(cls):
+        return [currency for currency in cls]
+
+
+class BalancePopup(SQLModel, table=True):
+    __tablename__ = "balance_popups"  # type: ignore
+
+    id: int = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id")
+    price_usd: float = Field(nullable=False)
+    address_to_pay: str = Field(nullable=False)
+    currency_to_pay: CurrencyToPayEnum = Field(nullable=False)
+    time_to_pay_minutes: int = Field(nullable=False)
+    pay_until: datetime = Field(nullable=False)
+
+    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    finished_at: datetime = Field(default=None, nullable=True)
