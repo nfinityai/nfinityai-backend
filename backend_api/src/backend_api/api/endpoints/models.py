@@ -23,7 +23,7 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 async def get_categories(
     category_service: CategoryService = Depends(get_category_service),
 ):
-    return await category_service.list_categories()
+    return await category_service.list_all_categories()
 
 
 @router.get("/categories/{category_id}", response_model=CategorySchema)

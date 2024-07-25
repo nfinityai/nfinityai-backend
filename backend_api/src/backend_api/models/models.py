@@ -25,4 +25,5 @@ class Model(SQLModel, table=True):
     class Config:
         arbitrary_types_allowed = True
 
+
 site.add_view(ModelView(Model))

@@ -11,7 +11,7 @@ from backend_api.schemas.categories import (
 )
 from backend_api.schemas.categories import (
     CreateCategory as CreateCategorySchema,
-    CategoryList as CategoryListSchema
+    CategoryList as CategoryListSchema,
 )
 from backend_api.services.base import BaseDataManager, BaseService
 
@@ -32,6 +32,10 @@ class CategoryService(BaseService[Category]):
         categories = await CategoryManager(self.session).list_active_categories()
         return CategoryListSchema(categories=categories)
 
+    async def list_all_categories(self) -> CategoryListSchema:
+        categories = await CategoryManager(self.session).list_all_categories()
+        return CategoryListSchema(categories=categories)
+
 
 class CategoryManager(BaseDataManager[Category]):
     async def get_category(self, category_id: int) -> CategorySchema | None:
@@ -48,6 +52,12 @@ class CategoryManager(BaseDataManager[Category]):
 
     async def list_active_categories(self) -> list[CategorySchema]:
         stmt = select(Category).where(Category.is_active)
+
+        models = await self.get_all(stmt)
+        return [CategorySchema(**model.model_dump()) for model in models]
+
+    async def list_all_categories(self) -> list[CategorySchema]:
+        stmt = select(Category)
 
         models = await self.get_all(stmt)
         return [CategorySchema(**model.model_dump()) for model in models]
