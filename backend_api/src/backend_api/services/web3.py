@@ -1,3 +1,5 @@
+from datetime import datetime
+from enum import Enum
 from typing import Annotated, Any
 
 from eth_typing import ChecksumAddress
@@ -28,7 +30,7 @@ from backend_api.services.base import BaseDataManager, BaseService
 logger = get_logger(__name__)
 
 
-class Web3EventService(BaseService[Web3Event]):
+class Web3Service(BaseService[Web3Event]):
     def __init__(
         self,
         session: AsyncSession,
@@ -67,11 +69,11 @@ class Web3EventService(BaseService[Web3Event]):
 
         if isinstance(attr_dict, AttributeDict):
             return {
-                k: _validate_value(Web3EventService.attribute_dict_to_dict(v))
+                k: _validate_value(Web3Service.attribute_dict_to_dict(v))
                 for k, v in attr_dict.items()
             }
         elif isinstance(attr_dict, list):
-            return [Web3EventService.attribute_dict_to_dict(item) for item in attr_dict]  # type: ignore
+            return [Web3Service.attribute_dict_to_dict(item) for item in attr_dict]  # type: ignore
         else:
             return attr_dict
 
@@ -130,6 +132,17 @@ class Web3EventService(BaseService[Web3Event]):
             )
 
 
+class EventTypeEnum(str, Enum):
+    DEPOSIT = "Deposit"
+
+    def __str__(self) -> str:
+        return self.value
+
+class Web3EventService(BaseService[Web3Event]):
+    async def get_deposit_events_since(self, since: datetime) -> list[Web3EventSchema]:
+        return await Web3EventManager(self.session).get_deposit_events_since(since)
+
+
 class Web3EventManager(BaseDataManager[Web3Event]):
     async def get_last_block_number(self) -> int | None:
         stmt = select(Web3Event.block_number).order_by(col(Web3Event.created_at).desc())
@@ -140,6 +153,12 @@ class Web3EventManager(BaseDataManager[Web3Event]):
 
         model = await self.get_one(stmt)
         return Web3EventSchema(**model.model_dump()) if model is not None else None
+    
+    async def get_deposit_events_since(self, since: datetime) -> list[Web3EventSchema]:
+        stmt = select(Web3Event).where(Web3Event.event_name == str(EventTypeEnum.DEPOSIT), Web3Event.created_at >= since)
+
+        models = await self.get_all(stmt)
+        return [Web3EventSchema(**model.model_dump()) for model in models]
 
     async def add_events(self, events: list[CreateWeb3EventSchema]) -> None:
         await self.add_all([Web3Event(**event.model_dump()) for event in events])
@@ -150,9 +169,15 @@ class Web3EventManager(BaseDataManager[Web3Event]):
         return Web3EventSchema(**model.model_dump())
 
 
-async def get_web3_event_service(
+async def get_web3_service(
     session: Annotated[AsyncSession, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
 ):
-    async with Web3EventService(session, settings) as web3_service:
+    async with Web3Service(session, settings) as web3_service:
         yield web3_service
+
+
+async def get_web3_event_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    return Web3EventService(session)

@@ -19,9 +19,17 @@ class BalancePopupService(BaseService[BalancePopupModel]):
 
     async def update_balance_popup(self, balance: UpdateBalancePopupSchema) -> BalancePopupSchema:
         return await BalancePopupDataManager(self.session).upd_balance_popup(balance)
+    
+    async def get_unfinished_balance_popups(self) -> list[BalancePopupSchema]:
+        return await BalancePopupDataManager(self.session).get_unfinished_balance_popups()
 
 
 class BalancePopupDataManager(BaseDataManager[BalancePopupModel]):
+    async def get_unfinished_balance_popups(self) -> list[BalancePopupSchema]:
+        stmt = select(BalancePopupModel).where(BalancePopupModel.finished_at is None)
+        models = await self.get_all(stmt)
+        return [BalancePopupSchema(**model.model_dump()) for model in models]
+
     async def get_balance_popup(self, id: int) -> BalancePopupSchema | None:
         stmt = select(BalancePopupModel).where(BalancePopupModel.id == id)
 
