@@ -47,6 +47,8 @@ class UpdateModel(BaseModel):
     latest_version: dict = {}
     version: str | None
 
+    category_id: int
+
     updated_at: datetime = Field(default_factory=datetime.now)
 
 

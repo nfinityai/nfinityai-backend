@@ -39,7 +39,7 @@ async def update_models():
                 existed = await service.get_model_by_slug(model.slug)
                 if existed:
                     await service.update_model(
-                        UpdateModelSchema(id=existed.id, **model.model_dump())
+                        UpdateModelSchema(id=existed.id, category_id=category.id, **model.model_dump())
                     )
                     continue
                 await service.create_model(CreateModelSchema(category_id=category.id, **model.model_dump()))
