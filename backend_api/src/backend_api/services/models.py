@@ -72,7 +72,16 @@ class ModelManager(BaseDataManager[Model]):
         return ModelSchema(**model.model_dump())
 
     async def upd_model(self, update_model: UpdateModelSchema) -> ModelSchema:
-        model = await self.add_one(Model(**update_model.model_dump()))
+        stmt = select(Model).where(Model.id == update_model.id)
+        model = await self.get_one(stmt)
+                
+        # Update model attributes
+        for key, value in update_model.model_dump().items():
+            setattr(model, key, value)
+
+        await self.session.commit()
+        await self.session.refresh(model)
+
         return ModelSchema(**model.model_dump())
 
 async def get_model_service(
