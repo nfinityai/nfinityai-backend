@@ -28,11 +28,11 @@ class ModelProviderModel(BaseModel):
     name: str
     description: str
     run_count: int
-    image_url: str = Field(validation_alias="cover_image_url")
+    image_url: str | None = Field(..., validation_alias="cover_image_url")
     default_example: ModelProviderDefaultExampleModel
     latest_version: dict
     slug: str
-    version: str
+    version: str | None
 
 
 class ModelProviderModelList(BaseModel):
@@ -64,7 +64,6 @@ class ModelProviderModelRunAsyncResult(ModelProviderModelRunAsync):
     finished_at: datetime | None
 
 
-
 class ModelProviderHardwareCostInfo(BaseModel):
     name: str
     sku: str
@@ -75,6 +74,7 @@ class ModelProviderHardwareCostInfo(BaseModel):
     gpu_ram_gb: int
     ram_gb: int
 
+
 class ModelProviderHardwareCosts(BaseModel):
     info: list[ModelProviderHardwareCostInfo]
 
@@ -83,6 +83,7 @@ class ModelProviderModelCostInfo(BaseModel):
     name: str
     sku: str
     prediction_time: float
+
 
 class ModelProviderModelCosts(BaseModel):
     info: ModelProviderModelCostInfo

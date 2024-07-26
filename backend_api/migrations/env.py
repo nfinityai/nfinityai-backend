@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 
 from alembic import context
 
-import  backend_api.models
+import backend_api.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

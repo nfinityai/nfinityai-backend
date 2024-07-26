@@ -10,11 +10,21 @@ from .base import BaseDataManager, BaseService
 
 
 class UserService(BaseService[UserModel]):
+    async def get_user_by_id(self, user_id: int) -> UserSchema:
+        return await UserDataManager(self.session).get_user_by_id(user_id)
+
     async def get_user(self, address: str) -> UserSchema:
         return await UserDataManager(self.session).get_user(address)
 
 
 class UserDataManager(BaseDataManager[UserModel]):
+    async def get_user_by_id(self, user_id: int) -> UserSchema:
+        stmt = select(UserModel).where(UserModel.id == user_id)
+
+        model = await self.get_one(stmt)
+        return UserSchema(**model.model_dump())
+
+
     async def get_user(self, address: str) -> UserSchema:
         stmt = select(UserModel).where(UserModel.wallet_address == address)
 
