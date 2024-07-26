@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend_api.schemas.categories import (
     Category as CategorySchema,
@@ -31,7 +31,10 @@ async def get_category(
     category_id: int,
     category_service: CategoryService = Depends(get_category_service),
 ):
-    return await category_service.get_category(category_id)
+    category_data = await category_service.get_category(category_id)
+    if not category_data:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category_data
 
 
 @router.get("/models", response_model=ModelSchemaList)

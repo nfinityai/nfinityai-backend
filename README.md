@@ -43,8 +43,8 @@ This project comprises a backend API, a provider API gateway, and a PostgreSQL d
     ```
 
 4. Apply Alembic migrations to set up the database:
+    ###### Open a new terminal and navigate to the project directory
     ```sh
-    # Open a new terminal and navigate to the project directory
     docker-compose exec backend-api alembic upgrade head
     ```
 
