@@ -11,7 +11,7 @@ class ModelRunQuery(BaseModel):
 class ModelProviderCategory(BaseModel):
     name: str
     slug: str
-    description: str
+    description: str | None
     provider: str = Field(exclude=True)
 
 
@@ -26,7 +26,7 @@ class ModelProviderDefaultExampleModel(BaseModel):
 
 class ModelProviderModel(BaseModel):
     name: str
-    description: str
+    description: str | None
     run_count: int
     image_url: str | None = Field(..., validation_alias="cover_image_url")
     default_example: ModelProviderDefaultExampleModel

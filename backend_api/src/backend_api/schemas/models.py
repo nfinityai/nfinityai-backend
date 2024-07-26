@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
@@ -29,13 +29,17 @@ class CreateModel(BaseModel):
     run_count: int = 0
     image_url: str | None
     default_example: DefaultExampleModel
-    latest_version: dict = {}
+    latest_version: dict | None
     slug: str
     version: str | None
 
     category_id: int
 
     created_at: datetime = Field(default_factory=datetime.now)
+
+    @field_validator("latest_version", mode="before")
+    def set_latest_version(cls, value):
+        return value or {}
 
 
 class UpdateModel(BaseModel):
@@ -44,13 +48,17 @@ class UpdateModel(BaseModel):
     description: str
     image_url: str | None
     default_example: DefaultExampleModel
-    latest_version: dict = {}
+    latest_version: dict | None
     slug: str
     version: str | None
 
     category_id: int
 
     updated_at: datetime = Field(default_factory=datetime.now)
+
+    @field_validator("latest_version", mode="before")
+    def set_latest_version(cls, value):
+        return value or {}
 
 
 class ModelList(BaseModel):
