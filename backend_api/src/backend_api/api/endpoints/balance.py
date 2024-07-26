@@ -42,7 +42,6 @@ async def get_balance(
     "/balance/popup/currencies", response_model=BalancePopupCurrenciesListModel
 )
 async def get_available_currencies_to_pay(
-    coin_id: CurrencyToPayEnum,
     current_user: UserSchema = Depends(get_current_user),
 ):
     return BalancePopupCurrenciesListModel()
