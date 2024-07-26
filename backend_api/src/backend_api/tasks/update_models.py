@@ -13,6 +13,9 @@ from backend_api.schemas.models import (
 from backend_api.services.categories import CategoryService, get_category_service
 from backend_api.services.model_providers import ModelProviderService
 from backend_api.services.models import ModelService, get_model_service
+from backend_api.backend.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def _get_categories() -> CategoryListSchema:
@@ -38,8 +41,14 @@ async def update_models():
             for model in (await _get_models(category.slug)).models:
                 existed = await service.get_model_by_slug(model.slug)
                 if existed:
-                    await service.update_model(
-                        UpdateModelSchema(id=existed.id, category_id=category.id, **model.model_dump())
-                    )
+                    try:
+                        await service.update_model(
+                            UpdateModelSchema(id=existed.id, category_id=category.id, **model.model_dump())
+                        )
+                    except Exception as e:
+                        await logger.error("Failed to update model", exc=e)
                     continue
-                await service.create_model(CreateModelSchema(category_id=category.id, **model.model_dump()))
+                try:
+                    await service.create_model(CreateModelSchema(category_id=category.id, **model.model_dump()))
+                except Exception as e:
+                    await logger.error("Failed to create model", exc=e)

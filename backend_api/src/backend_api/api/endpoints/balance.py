@@ -38,7 +38,7 @@ async def get_balance(
     return BalanceModelSchema(**balance.model_dump())
 
 
-@router.post(
+@router.get(
     "/balance/popup/currencies", response_model=BalancePopupCurrenciesListModel
 )
 async def get_available_currencies_to_pay(
