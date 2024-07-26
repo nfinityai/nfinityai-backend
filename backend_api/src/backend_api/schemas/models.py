@@ -45,6 +45,7 @@ class UpdateModel(BaseModel):
     image_url: str | None
     default_example: DefaultExampleModel
     latest_version: dict = {}
+    slug: str
     version: str | None
 
     category_id: int
