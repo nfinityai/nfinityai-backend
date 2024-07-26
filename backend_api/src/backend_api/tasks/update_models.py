@@ -46,9 +46,9 @@ async def update_models():
                             UpdateModelSchema(id=existed.id, category_id=category.id, **model.model_dump())
                         )
                     except Exception as e:
-                        await logger.error("Failed to update model", exc=e)
+                        logger.error("Failed to update model", exc=e)
                     continue
                 try:
                     await service.create_model(CreateModelSchema(category_id=category.id, **model.model_dump()))
                 except Exception as e:
-                    await logger.error("Failed to create model", exc=e)
+                    logger.error("Failed to create model", exc=e)
