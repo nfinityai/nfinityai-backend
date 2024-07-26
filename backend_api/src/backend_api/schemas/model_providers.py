@@ -30,7 +30,7 @@ class ModelProviderModel(BaseModel):
     run_count: int
     image_url: str | None = Field(..., validation_alias="cover_image_url")
     default_example: ModelProviderDefaultExampleModel
-    latest_version: dict
+    latest_version: dict | None
     slug: str
     version: str | None
 
