@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated
 from fastapi import Depends
 from sqlmodel import select
@@ -17,9 +18,7 @@ from .base import BaseDataManager, BaseService
 
 
 class UsageService(BaseService[UsageModel]):
-    def __init__(
-        self, session: AsyncSession, transaction_service: TransactionService
-    ) -> None:
+    def __init__(self, session: AsyncSession, transaction_service: TransactionService) -> None:
         super().__init__(session)
         self.transaction_service = transaction_service
 
@@ -38,7 +37,8 @@ class UsageService(BaseService[UsageModel]):
                 status=TransactionStatus.PENDING,
             )
         )
-        if transaction.status == TransactionStatus.COMPLETED:
+        # TODO Add method to check status from replicate.
+        if transaction.status == TransactionStatus.COMPLETED or TransactionStatus.PENDING:
             return await UsageDataManager(self.session).add_usage(create_usage)
         elif transaction.status == TransactionStatus.FAILED:
             raise TransactionFailedError("Transaction status is failed")
@@ -66,8 +66,6 @@ class UsageDataManager(BaseDataManager[UsageModel]):
 
 async def get_usage_service(
     session: Annotated[AsyncSession, Depends(get_session)],
-    transaction_service: Annotated[
-        TransactionService, Depends(get_transaction_service)
-    ],
+    transaction_service: Annotated[TransactionService, Depends(get_transaction_service)],
 ) -> UsageService:
     return UsageService(session, transaction_service)
