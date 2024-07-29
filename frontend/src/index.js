@@ -29,9 +29,13 @@ async function getSiweMessage(address) {
   return siwe_message.prepareMessage();
 }
 
-function connectWallet () {
-  provider.send('eth_requestAccounts', [])
-    .catch(() => console.log('user rejected request'));
+async function connectWallet() {
+  try {
+    await provider.send('eth_requestAccounts', []);
+    console.log('Wallet connected');
+  } catch (error) {
+    console.log('User rejected request');
+  }
 }
 
 async function signInWithEthereum () {

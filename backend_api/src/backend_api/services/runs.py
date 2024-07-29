@@ -45,7 +45,7 @@ class RunService:
         run_query: ModelRunQuery,
         version: str | None = None,
     ) -> ModelProviderModelRunResult:
-        await logger.info(
+        logger.info(
             "Run model started",
             provider=self.settings.provider,
             user=user,
@@ -57,9 +57,9 @@ class RunService:
                 self.settings.provider, model, run_query.input, version
             )
         except ModelProviderException as e:
-            await logger.error("Unable to get result from model run", exc_info=e)
+            logger.error("Unable to get result from model run", exc_info=e)
             raise RunModelException("Unable to run model") from e
-        await logger.info(
+        logger.info(
             "Run model successfully finished",
             provider=self.settings.provider,
             user=user,
@@ -89,7 +89,7 @@ class RunService:
                 self.settings.provider, model, run_query.input, version
             )
         except ModelProviderException as e:
-            await logger.error("Unable to run model asynchronically", exc_info=e)
+            logger.error("Unable to run model asynchronically", exc_info=e)
             raise RunModelException("Unable to run model asynchronically") from e
 
         # track usage
@@ -106,14 +106,14 @@ class RunService:
         try:
             return await self.model_provider_service.run_model_async_status(run_id)
         except ModelProviderException as e:
-            await logger.error("Unable to get run status", exc_info=e)
+            logger.error("Unable to get run status", exc_info=e)
             raise RunModelException("Unable to get run status") from e
 
     async def get_run_result(self, run_id: str):
         try:
             return await self.model_provider_service.run_model_async_result(run_id)
         except ModelProviderException as e:
-            await logger.error("Unable to get run result", exc_info=e)
+            logger.error("Unable to get run result", exc_info=e)
             raise RunModelException("Unable to get run result") from e
 
     async def _calculate_cost(
