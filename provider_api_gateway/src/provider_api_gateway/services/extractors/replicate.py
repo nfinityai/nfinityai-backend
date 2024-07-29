@@ -67,8 +67,19 @@ class ReplicateModelCostExtractor:
             logger.warning("Run time and cost section not found", url=url)
             return None
 
-        # Assuming the information is within the next sibling element
-        section_content = section_header.find_next_sibling("p")
+        # Find the paragraph that contains the text "This model runs on"
+        section_content = None
+        first_paragraph = None
+        for paragraph in section_header.find_all_next("p"):
+            if not first_paragraph:
+                first_paragraph = paragraph
+            if "This model runs on" in paragraph.get_text():
+                section_content = paragraph
+                break
+
+        # Fallback to the first paragraph if the specific text is not found
+        if not section_content:
+            section_content = first_paragraph
 
         if not section_content:
             logger.warning("Run time and cost content not found", url=url)
@@ -78,20 +89,18 @@ class ReplicateModelCostExtractor:
 
     def extract_gpu_and_prediction_time(self, run_time_and_cost) -> CostInfoModel:
         """Extract GPU and prediction time from run_time_and_cost string using regex."""
-        gpu_pattern = r"runs on (.+?) hardware"
+        gpu_pattern = r"This model runs on\s*(.+?)\s*hardware"
         prediction_time_pattern = r"complete within (\d+) seconds"
 
-        gpu_match = re.search(gpu_pattern, run_time_and_cost)
+        gpu_match = re.search(gpu_pattern, run_time_and_cost, re.IGNORECASE)
         prediction_time_match = re.search(prediction_time_pattern, run_time_and_cost)
 
         gpu = gpu_match.group(1) if gpu_match else None
-        prediction_time = (
-            prediction_time_match.group(1) if prediction_time_match else None
-        )
+        prediction_time = prediction_time_match.group(1) if prediction_time_match else None
 
         if not gpu or not prediction_time:
             logger.warning(
-                "Failed to extract GPU and prediction time", content=run_time_and_cost
+                "Failed to extract GPU and prediction time", extra={"content": run_time_and_cost}
             )
 
         return CostInfoModel(name=gpu, prediction_time=prediction_time)  # type: ignore
@@ -100,9 +109,7 @@ class ReplicateModelCostExtractor:
         html_content = await self.fetch_page(url)
         run_time_and_cost_info = self.parse_content(url, html_content)
         if run_time_and_cost_info:
-            extracted_info = self.extract_gpu_and_prediction_time(
-                run_time_and_cost_info
-            )
+            extracted_info = self.extract_gpu_and_prediction_time(run_time_and_cost_info)
             return extracted_info
         return None
 
@@ -237,9 +244,7 @@ async def get_session() -> aiohttp.ClientSession:
 
 async def get_retry_client(
     session: Annotated[aiohttp.ClientSession, Depends(get_session)],
-    retry_options: Annotated[
-        aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)
-    ],
+    retry_options: Annotated[aiohttp_retry.RetryOptionsBase, Depends(get_retry_options)],
 ) -> aiohttp_retry.RetryClient:
     return aiohttp_retry.RetryClient(client_session=session, retry=retry_options)
 

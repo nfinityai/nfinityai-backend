@@ -34,6 +34,7 @@ class CreateTransaction(BaseModel):
     type: TransactionType
     status: TransactionStatus = TransactionStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.now)
+    finished_at: datetime | None = None
 
 
 class Transaction(CreateTransaction):
