@@ -104,6 +104,9 @@ class ReplicateClient(BaseProvider, Client):
         except ReplicateModelError as e:
             logger.error("Unable to get result", model=ref, input=input, error=e)
             return None, str(e)
+        except Exception as e:
+            logger.error("Unable to get result", model=ref, input=input, error=e)
+            return None, str(e)
 
     # async model run
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from fastapi import Depends
 from typing_extensions import Annotated
@@ -39,28 +40,23 @@ class TransactionService(BaseService[TransactionModel]):
     async def get_transactions(self, user_id: int) -> list[TransactionSchema]:
         return await TransactionDataManager(self.session).get_transactions(user_id)
 
-    async def create_transaction(
-        self, transaction: CreateTransactionSchema
-    ) -> TransactionSchema:
+    async def create_transaction(self, transaction: CreateTransactionSchema) -> TransactionSchema:
         data_manager = TransactionDataManager(self.session)
-        transaction = await data_manager.create_transaction(transaction)
+        _transaction = await data_manager.create_transaction(transaction)
 
         try:
-            if transaction.type == TransactionType.CREDIT:
-                await self.balance_service.add_amount(
-                    transaction.user_id, transaction.amount
-                )
+            if _transaction.type == TransactionType.CREDIT:
+                await self.balance_service.add_amount(_transaction.user_id, _transaction.amount)
             else:
-                await self.balance_service.remove_amount(
-                    transaction.user_id, transaction.amount
-                )
+                await self.balance_service.remove_amount(_transaction.user_id, _transaction.amount)
         except (BalanceNotFoundError, InsufficientFundsError):
             return await data_manager.update_transaction(
-                UpdateTransactionFailedSchema(**transaction.model_dump())
+                UpdateTransactionFailedSchema(**_transaction.model_dump())
             )
-
+        if _transaction.finished_at is None:
+            _transaction.finished_at = datetime.now()
         return await data_manager.update_transaction(
-            UpdateTransactionCompletedSchema(**transaction.model_dump())
+            UpdateTransactionCompletedSchema(**_transaction.model_dump())
         )
 
 
@@ -70,16 +66,14 @@ class TransactionDataManager(BaseDataManager[TransactionModel]):
 
         model = await self.get_one(stmt)
         return TransactionSchema(**model.model_dump())
-    
+
     async def get_transactions(self, user_id: int) -> list[TransactionSchema]:
         stmt = select(TransactionModel).where(TransactionModel.user_id == user_id)
 
         models = await self.get_all(stmt)
         return [TransactionSchema(**model.model_dump()) for model in models]
 
-    async def create_transaction(
-        self, transaction: CreateTransactionSchema
-    ) -> TransactionSchema:
+    async def create_transaction(self, transaction: CreateTransactionSchema) -> TransactionSchema:
         model = await self.add_one(TransactionModel(**transaction.model_dump()))
         return TransactionSchema(**model.model_dump())
 
@@ -87,14 +81,24 @@ class TransactionDataManager(BaseDataManager[TransactionModel]):
         self,
         transaction: UpdateTransactionCompletedSchema | UpdateTransactionFailedSchema,
     ) -> TransactionSchema:
-        model = await self.add_one(TransactionModel(**transaction.model_dump()))
-        return TransactionSchema(**model.model_dump())
+        stmt = select(TransactionModel).where(TransactionModel.id == transaction.id)
+        existing_transaction = await self.get_one(stmt)
+
+        if not existing_transaction:
+            raise ValueError("Transaction not found")
+
+        # Update transaction attributes
+        for field, value in transaction.model_dump().items():
+            setattr(existing_transaction, field, value)
+
+        await self.session.commit()
+        await self.session.refresh(existing_transaction)
+
+        return TransactionSchema(**existing_transaction.model_dump())
 
 
 async def get_transaction_service(
     session: Annotated[AsyncSession, Depends(get_session)],
-    balance_service: Annotated[
-        BalanceService, Depends(get_balance_service)
-    ],
+    balance_service: Annotated[BalanceService, Depends(get_balance_service)],
 ) -> TransactionService:
     return TransactionService(session, balance_service)
