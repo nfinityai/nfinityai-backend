@@ -10,6 +10,8 @@ from web3 import Web3
 from backend_api.backend.config import Settings
 from backend_api.schemas.auth import VerifyModel
 
+logger = logging.getLogger(__name__)
+
 
 def create_jwt(data: dict, settings: Settings) -> str:
     payload = data.copy()
@@ -51,6 +53,7 @@ def create_siwe_message(wallet_address: str, statement="Sign in with Ethereum") 
 def verify_siwe_message(message: SiweMessage, signature: str) -> VerifyModel:
     try:
         message.verify(signature)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as error:
+        logger.error(f"Error verify siwe message: {error=}")
+        raise HTTPException(status_code=400, detail=str(error))
     return VerifyModel(message=message, address=message.address, signature=signature)
