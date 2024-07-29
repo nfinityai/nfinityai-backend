@@ -4,12 +4,14 @@ from fastapi import Depends
 
 from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.logging import get_logger
+from backend_api.backend.session import get_session
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsync,
     ModelProviderModelRunResult,
     ModelRunQuery,
 )
+from backend_api.schemas.models import Model
 from backend_api.schemas.usage import CreateUsage
 from backend_api.schemas.users import User as UserSchema
 from backend_api.services.model_providers import (
@@ -17,6 +19,7 @@ from backend_api.services.model_providers import (
     ModelProviderService,
     get_model_provider_service,
 )
+from backend_api.services.models import ModelService, get_model_service
 from backend_api.services.usage import UsageService, get_usage_service
 
 logger = get_logger(__name__)
@@ -137,15 +140,20 @@ class RunService:
         elapsed_time: float | None,
         signature: str,
     ):
-        return await self.usage_service.create_usage(
-            CreateUsage(
-                user_id=user.id,
-                credits_spent=await self._calculate_cost(
-                    self.settings.provider, model, elapsed_time
-                ),
-                request_signature=signature,
+        model_slug = model
+        async for session in get_session():
+            service: ModelService = await get_model_service(session)
+            model: Model = await service.get_model_by_slug(model_slug)
+            return await self.usage_service.create_usage(
+                CreateUsage(
+                    user_id=user.id,
+                    credits_spent=await self._calculate_cost(
+                        self.settings.provider, model_slug, elapsed_time
+                    ),
+                    request_signature=signature,
+                    model_id=model.id,
+                )
             )
-        )
 
 
 async def get_run_service(

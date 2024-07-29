@@ -14,6 +14,8 @@ class Usage(BaseModel):
 
 class CreateUsage(BaseModel):
     user_id: int
+    model_id: int
+    transaction_id: int | None = None
     credits_spent: float
     request_signature: str
     created_at: datetime = Field(default_factory=datetime.now)

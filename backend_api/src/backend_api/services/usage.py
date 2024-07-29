@@ -39,7 +39,14 @@ class UsageService(BaseService[UsageModel]):
         )
         # TODO Add method to check status from replicate.
         if transaction.status == TransactionStatus.COMPLETED or TransactionStatus.PENDING:
-            return await UsageDataManager(self.session).add_usage(create_usage)
+            usage_dict = create_usage.dict()
+            usage_dict.update(
+                {
+                    "transaction_id": transaction.id,
+                }
+            )
+            updated_usage = CreateUsage(**usage_dict)
+            return await UsageDataManager(self.session).add_usage(updated_usage)
         elif transaction.status == TransactionStatus.FAILED:
             raise TransactionFailedError("Transaction status is failed")
 

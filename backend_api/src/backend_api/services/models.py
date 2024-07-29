@@ -84,6 +84,7 @@ class ModelManager(BaseDataManager[Model]):
 
         return ModelSchema(**model.model_dump())
 
+
 async def get_model_service(
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
