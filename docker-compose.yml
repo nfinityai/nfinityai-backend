@@ -18,6 +18,10 @@ services:
       - BACKEND_API_INFURA_BASE_URL=${BACKEND_API_INFURA_BASE_URL}
       - BACKEND_API_CONTRACT_ADDRESS=${BACKEND_API_CONTRACT_ADDRESS}
       - BACKEND_API_COINGECKO_API_KEY=${BACKEND_API_COINGECKO_API_KEY}
+    depends_on:
+      - db
+      - provider_api_gateway
+
   provider_api_gateway:
     build:
       context: provider_api_gateway/
@@ -26,6 +30,9 @@ services:
       - 8000
     environment:
       - REPLICATE_API_TOKEN=${PROVIDER_REPLICATE_API_TOKEN}
+    depends_on:
+      - db
+
   db:
     image: postgres:12
     expose:
