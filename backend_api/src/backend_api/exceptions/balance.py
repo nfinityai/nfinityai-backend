@@ -9,5 +9,6 @@ class InsufficientFundsError(BaseException):
 class TransactionFailedError(BaseException):
     pass
 
+
 class TransactionUncompletedError(BaseException):
     pass
