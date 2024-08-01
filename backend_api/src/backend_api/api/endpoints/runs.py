@@ -1,7 +1,6 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
-from backend_api.exceptions import InsufficientFundsError
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
     ModelProviderModelRunAsync,
@@ -45,7 +44,7 @@ async def run_model(
     balance_service: BalanceService = Depends(get_balance_service),
 ):
     if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
-        raise InsufficientFundsError("Insufficient balance to run the model")
+        raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
     return await run_service.run_model(user, verify, model, run_query, version)
 
 
@@ -60,7 +59,7 @@ async def run_model_async(
     balance_service: BalanceService = Depends(get_balance_service),
 ):
     if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
-        raise InsufficientFundsError("Insufficient balance to run the model")
+        raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
     return await run_service.run_model_async(user, verify, model, run_query, version)
 
 
