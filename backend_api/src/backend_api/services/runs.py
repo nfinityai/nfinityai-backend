@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 
 from backend_api.backend.config import Settings, get_settings
 from backend_api.backend.logging import get_logger
@@ -14,6 +14,7 @@ from backend_api.schemas.model_providers import (
 from backend_api.schemas.models import Model
 from backend_api.schemas.usage import CreateUsage
 from backend_api.schemas.users import User as UserSchema
+from backend_api.services.balance import BalanceService
 from backend_api.services.model_providers import (
     ModelProviderException,
     ModelProviderService,
@@ -21,6 +22,7 @@ from backend_api.services.model_providers import (
 )
 from backend_api.services.models import ModelService, get_model_service
 from backend_api.services.usage import UsageService, get_usage_service
+from backend_api.services.web3 import Web3Service, get_web3_service
 
 logger = get_logger(__name__)
 
@@ -35,19 +37,43 @@ class RunService:
         settings: Settings,
         model_provider_service: ModelProviderService,
         usage_service: UsageService,
+        web3_service: Web3Service,
     ):
         self.settings = settings
         self.model_provider_service = model_provider_service
         self.usage_service = usage_service
+        self.web3_service = web3_service
 
     async def run_model(
         self,
         user: UserSchema,
         verify: VerifyModel,
+        balance_service: BalanceService,
         model: str,
         run_query: ModelRunQuery,
         version: str | None = None,
     ) -> ModelProviderModelRunResult:
+        if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
+            logger.error(
+                "Insufficient NFNT balance to run the model",
+                provider=self.settings.provider,
+                user=user,
+                model=model,
+                run_query=run_query,
+            )
+            raise HTTPException(
+                status_code=400, detail="Insufficient NFNT balance to run the model"
+            )
+
+        if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
+            logger.error(
+                "Insufficient balance to run the model",
+                provider=self.settings.provider,
+                user=user,
+                model=model,
+                run_query=run_query,
+            )
+            raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
         logger.info(
             "Run model started",
             provider=self.settings.provider,
@@ -83,10 +109,31 @@ class RunService:
         self,
         user: UserSchema,
         verify: VerifyModel,
+        balance_service: BalanceService,
         model: str,
         run_query: ModelRunQuery,
         version: str | None = None,
     ) -> ModelProviderModelRunAsync:
+        if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
+            logger.error(
+                "Insufficient NFNT balance to run the model",
+                provider=self.settings.provider,
+                user=user,
+                model=model,
+                run_query=run_query,
+            )
+            raise HTTPException(
+                status_code=400, detail="Insufficient NFNT balance to run the model"
+            )
+        if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
+            logger.error(
+                "Insufficient balance to run the model",
+                provider=self.settings.provider,
+                user=user,
+                model=model,
+                run_query=run_query,
+            )
+            raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
         try:
             run = await self.model_provider_service.run_model_async(
                 self.settings.provider, model, run_query.input, version
@@ -119,16 +166,12 @@ class RunService:
             logger.error("Unable to get run result", exc_info=e)
             raise RunModelException("Unable to get run result") from e
 
-    async def _calculate_cost(
-        self, provider: str, model: str, elapsed_time: float | None
-    ) -> float:
+    async def _calculate_cost(self, provider: str, model: str, elapsed_time: float | None) -> float:
         model_costs = await self.model_provider_service.get_model_costs(provider, model)
         if elapsed_time is None:
             elapsed_time = model_costs.info.prediction_time
         hardware_costs = await self.model_provider_service.get_hardware_costs(provider)
-        for hardware in filter(
-            lambda x: x.sku == model_costs.info.sku, hardware_costs.info
-        ):
+        for hardware in filter(lambda x: x.sku == model_costs.info.sku, hardware_costs.info):
             cost = hardware.price_per_second * elapsed_time
             return cost
         return self.settings.default_model_cost
@@ -158,13 +201,13 @@ class RunService:
 
 async def get_run_service(
     settings: Annotated[Settings, Depends(get_settings)],
-    model_provider_service: Annotated[
-        ModelProviderService, Depends(get_model_provider_service)
-    ],
+    model_provider_service: Annotated[ModelProviderService, Depends(get_model_provider_service)],
     usage_service: Annotated[UsageService, Depends(get_usage_service)],
+    web3_service: Annotated[Web3Service, Depends(get_web3_service)],
 ):
     return RunService(
         settings=settings,
         model_provider_service=model_provider_service,
         usage_service=usage_service,
+        web3_service=web3_service,
     )
