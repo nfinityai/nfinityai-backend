@@ -16,7 +16,7 @@ from backend_api.services.auth import get_current_user
 from backend_api.services.categories import CategoryService, get_category_service
 from backend_api.services.models import ModelService, get_model_service
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
 
 
 @router.get("/categories", response_model=CategorySchemaList)
