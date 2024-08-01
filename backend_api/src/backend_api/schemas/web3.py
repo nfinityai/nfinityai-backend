@@ -31,14 +31,14 @@ class CreateWeb3Event(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    @computed_field
+    @computed_field(return_type=str)
     @property
-    def event_id(self):
+    def event_id(self) -> str:
         return f"{self.transaction_hash}:{self.log_index}"
 
-    @computed_field
+    @computed_field(return_type=str)
     @property
-    def event_hash(self):
+    def event_hash(self) -> str:
         abi = get_settings().contract_abi
         event_abi = next(
             (

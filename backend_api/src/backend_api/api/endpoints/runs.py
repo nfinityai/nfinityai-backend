@@ -1,5 +1,5 @@
 from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from backend_api.schemas.auth import VerifyModel
 from backend_api.schemas.model_providers import (
@@ -43,9 +43,7 @@ async def run_model(
     version: str | None = None,
     balance_service: BalanceService = Depends(get_balance_service),
 ):
-    if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
-        raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
-    return await run_service.run_model(user, verify, model, run_query, version)
+    return await run_service.run_model(user, verify, balance_service, model, run_query, version)
 
 
 @router.post("/async/{model}", response_model=ModelProviderModelRunAsync)
@@ -58,9 +56,9 @@ async def run_model_async(
     version: str | None = None,
     balance_service: BalanceService = Depends(get_balance_service),
 ):
-    if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
-        raise HTTPException(status_code=400, detail="Insufficient balance to run the model")
-    return await run_service.run_model_async(user, verify, model, run_query, version)
+    return await run_service.run_model_async(
+        user, verify, balance_service, model, run_query, version
+    )
 
 
 @router.get("/{run_id}/status", response_model=ModelProviderModelRunAsyncStatus)

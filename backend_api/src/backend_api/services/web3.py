@@ -26,6 +26,7 @@ from backend_api.schemas.web3 import (
     Web3Event as Web3EventSchema,
 )
 from backend_api.services.base import BaseDataManager, BaseService
+from backend_api.services.etherscan import EtherscanService
 
 logger = get_logger(__name__)
 
@@ -57,7 +58,8 @@ class Web3Service(BaseService[Web3Event]):
 
     async def _get_contract(self):
         return self.w3.eth.contract(
-            address=self._normalize_contract_address(self.settings.contract_address), abi=self.settings.contract_abi
+            address=self._normalize_contract_address(self.settings.contract_address),
+            abi=self.settings.contract_abi,
         )
 
     @staticmethod
@@ -102,9 +104,7 @@ class Web3Service(BaseService[Web3Event]):
         if block_number is None:
             raise Web3UnableToDetermineBlock("Could not get block number")
 
-        await logger.info(
-            f"Adding events from block {block_number}", block_number=block_number
-        )
+        await logger.info(f"Adding events from block {block_number}", block_number=block_number)
 
         for event in contract.events._events:
             event_name = event.get("name")
@@ -131,12 +131,43 @@ class Web3Service(BaseService[Web3Event]):
                 event_name=event_name,
             )
 
+    async def get_balance(self, address: str) -> int:
+        """
+        Get the balance of the specified address in NFNT.
+
+        Args:
+            address (str): The address to query the balance for.
+
+        Returns:
+            int: The balance of the address in NFNT.
+        """
+
+        nfnt_address: str = self.settings.nfnt_contract_address
+        balance_nfnt_tokens: int = 0
+        try:
+            checksum_address = self._normalize_contract_address(nfnt_address)
+            async with EtherscanService(settings=self.settings) as etherscan_service:
+                abi: dict = await etherscan_service.get_contract_abi(contract_address=nfnt_address)
+
+                nfnt_contract = self.w3.eth.contract(address=checksum_address, abi=abi)
+                balance_nfnt = await nfnt_contract.functions.balanceOf(address).call()
+
+                balance_nfnt_tokens = int(balance_nfnt / 1e18)
+        except Exception as error:
+            await logger.error(f"Getting NFNT balance for {address=}, {error=}")
+        return balance_nfnt_tokens
+
+    async def has_sufficient_balance(self, address: str, amount: int) -> bool:
+        balance = await self.get_balance(address)
+        return balance > amount
+
 
 class EventTypeEnum(str, Enum):
     DEPOSIT = "Deposit"
 
     def __str__(self) -> str:
         return self.value
+
 
 class Web3EventService(BaseService[Web3Event]):
     async def get_deposit_events_since(self, since: datetime) -> list[Web3EventSchema]:
@@ -153,9 +184,11 @@ class Web3EventManager(BaseDataManager[Web3Event]):
 
         model = await self.get_one(stmt)
         return Web3EventSchema(**model.model_dump()) if model is not None else None
-    
+
     async def get_deposit_events_since(self, since: datetime) -> list[Web3EventSchema]:
-        stmt = select(Web3Event).where(Web3Event.event_name == str(EventTypeEnum.DEPOSIT), Web3Event.created_at >= since)
+        stmt = select(Web3Event).where(
+            Web3Event.event_name == str(EventTypeEnum.DEPOSIT), Web3Event.created_at >= since
+        )
 
         models = await self.get_all(stmt)
         return [Web3EventSchema(**model.model_dump()) for model in models]

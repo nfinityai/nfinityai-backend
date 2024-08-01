@@ -9,9 +9,7 @@ import os
 @lru_cache
 def _get_contract_abi():
     with open(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "data/contract_abi.json"
-        )
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/contract_abi.json")
     ) as f:
         return json.load(f)
 
@@ -36,16 +34,10 @@ class Settings(BaseSettings):
 
     provider: str = Field(validation_alias="BACKEND_API_PROVIDER_NAME")
 
-    free_trial_mode: bool = Field(
-        default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE"
-    )
-    free_trial_credits: int = Field(
-        default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS"
-    )
+    free_trial_mode: bool = Field(default=True, validation_alias="BACKEND_API_FREE_TRIAL_MODE")
+    free_trial_credits: int = Field(default=5, validation_alias="BACKEND_API_FREE_TRIAL_CREDITS")
 
-    default_model_cost: float = Field(
-        default=2, validation_alias="BACKEND_API_DEFAULT_MODEL_COST"
-    )
+    default_model_cost: float = Field(default=2, validation_alias="BACKEND_API_DEFAULT_MODEL_COST")
 
     admin_username: str = Field(validation_alias="BACKEND_API_ADMIN_USERNAME")
     admin_password: str = Field(validation_alias="BACKEND_API_ADMIN_PASSWORD")
@@ -56,9 +48,10 @@ class Settings(BaseSettings):
     infura_base_url: str = Field(validation_alias="BACKEND_API_INFURA_BASE_URL")
     coingecko_api_key: str = Field(validation_alias="BACKEND_API_COINGECKO_API_KEY")
 
-    time_to_pay_minutes: int = Field(
-        default=15, validation_alias="BACKEND_API_TIME_TO_PAY_MINUTES"
-    )
+    etherscan_api_key: str = Field(validation_alias="BACKEND_API_ETHERSCAN_API_KEY")
+    nfnt_contract_address: str = Field(validation_alias="BACKEND_API_NFNT_CONTRACT_ADDRESS")
+
+    time_to_pay_minutes: int = Field(default=15, validation_alias="BACKEND_API_TIME_TO_PAY_MINUTES")
 
 
 @lru_cache

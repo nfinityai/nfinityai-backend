@@ -10,8 +10,6 @@ from backend_api.services.transaction import get_transaction_service
 from backend_api.services.balance import get_balance_service
 
 
-
-
 @scheduler.scheduled_job("interval", seconds=30, next_run_time=datetime.now())
 async def update_balance_popups():
     async for session in get_session():
