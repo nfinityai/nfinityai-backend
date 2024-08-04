@@ -20,6 +20,9 @@ services:
       - BACKEND_API_COINGECKO_API_KEY=${BACKEND_API_COINGECKO_API_KEY}
       - BACKEND_API_ETHERSCAN_API_KEY=${BACKEND_API_ETHERSCAN_API_KEY}
       - BACKEND_API_NFNT_CONTRACT_ADDRESS=${BACKEND_API_NFNT_CONTRACT_ADDRESS}
+      - BACKEND_API_MEDIA_UPLOAD_DIR=/app/media
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/backend_media:/app/media
     depends_on:
       - db
       - provider_api_gateway
@@ -43,3 +46,9 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+
+volumes:
+  pg_data:
