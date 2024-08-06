@@ -31,4 +31,4 @@ COPY ./src/backend_api backend_api
 
 EXPOSE 8000
 
-ENTRYPOINT ["uvicorn", "backend_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uvicorn", "backend_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips", "*", "--proxy-headers"]
