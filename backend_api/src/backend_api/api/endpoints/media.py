@@ -1,4 +1,3 @@
-
 from libcloud.storage.drivers.local import LocalStorageDriver
 from libcloud.storage.types import (
     ObjectDoesNotExistError,
@@ -38,3 +37,11 @@ async def serve_files(storage: str = Path(...), file_id: str = Path(...)):
             )
     except ObjectDoesNotExistError:
         return JSONResponse({"detail": "Not found"}, status_code=404)
+    except RuntimeError as e:
+        if "storage has not been added" in str(e):
+            return JSONResponse(
+                {"detail": f"Storage '{storage}' has not been configured"}, status_code=400
+            )
+        return JSONResponse({"detail": str(e)}, status_code=500)
+    except Exception as e:
+        return JSONResponse({"detail": str(e)}, status_code=500)
