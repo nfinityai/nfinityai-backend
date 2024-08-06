@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import UploadFile, Request, Depends
+from fastapi import UploadFile, Request
 from sqlmodel import SQLModel, Field, Column
 from starlette_admin import action
 from starlette_admin.contrib.sqla import ModelView
