@@ -49,6 +49,37 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./html:/usr/share/nginx/html
+      - ./certs:/etc/letsencrypt
+      - ./certs-data:/data/letsencrypt
+      - ./logs:/var/log/nginx
+    depends_on:
+      - backend_api
+      - provider_api_gateway
+    networks:
+      - webnet
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./certs-data:/data/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge
 
 volumes:
   pg_data:
