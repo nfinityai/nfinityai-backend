@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
     time_to_pay_minutes: int = Field(default=15, validation_alias="BACKEND_API_TIME_TO_PAY_MINUTES")
 
+    media_upload_dir: str = Field(default="/app/media", validation_alias="BACKEND_API_MEDIA_UPLOAD_DIR")
 
 @lru_cache
 def get_settings() -> Settings:
