@@ -32,6 +32,9 @@ This project comprises a backend API, a provider API gateway, and a PostgreSQL d
     BACKEND_API_INFURA_BASE_URL=your_infura_base_url_with_api_key
     BACKEND_API_CONTRACT_ADDRESS=0x3ABd9c3518b475fd369ad546d81475014dfda84c  # Nfinity contract address
     BACKEND_API_COINGECKO_API_KEY=your_coingecko_api_key
+   
+   BACKEND_API_ETHERSCAN_API_KEY=your_etherscan_api_key
+   BACKEND_API_NFNT_CONTRACT_ADDRESS=0x82d36570842fc1ac2a3b4dbe0e7c5c0e2e665090  # Nfnt contract etherscan address
 
     # Provider API Gateway Environment Variable
     PROVIDER_REPLICATE_API_TOKEN=your_provider_replicate_api_token
