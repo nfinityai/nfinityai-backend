@@ -18,6 +18,15 @@ services:
       - BACKEND_API_INFURA_BASE_URL=${BACKEND_API_INFURA_BASE_URL}
       - BACKEND_API_CONTRACT_ADDRESS=${BACKEND_API_CONTRACT_ADDRESS}
       - BACKEND_API_COINGECKO_API_KEY=${BACKEND_API_COINGECKO_API_KEY}
+      - BACKEND_API_ETHERSCAN_API_KEY=${BACKEND_API_ETHERSCAN_API_KEY}
+      - BACKEND_API_NFNT_CONTRACT_ADDRESS=${BACKEND_API_NFNT_CONTRACT_ADDRESS}
+      - BACKEND_API_MEDIA_UPLOAD_DIR=/app/media
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-.}/backend_media:/app/media
+    depends_on:
+      - db
+      - provider_api_gateway
+
   provider_api_gateway:
     build:
       context: provider_api_gateway/
@@ -26,6 +35,9 @@ services:
       - 8000
     environment:
       - REPLICATE_API_TOKEN=${PROVIDER_REPLICATE_API_TOKEN}
+    depends_on:
+      - db
+
   db:
     image: postgres:12
     expose:
@@ -34,6 +46,9 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
   nginx:
     image: nginx:latest
     container_name: nginx_server
@@ -65,3 +80,6 @@ services:
 networks:
   webnet:
     driver: bridge
+
+volumes:
+  pg_data:

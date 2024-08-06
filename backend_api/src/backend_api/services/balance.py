@@ -24,6 +24,13 @@ class BalanceService(BaseService[BalanceModel]):
     async def remove_amount(self, user_id: int, amount: float):
         return await BalanceDataManager(self.session).remove_amount(user_id, amount)
 
+    async def has_sufficient_balance(self, user_id: int, required_amount: float) -> bool:
+        try:
+            balance = await self.get_balance(user_id)
+            return balance.amount > required_amount
+        except BalanceNotFoundError:
+            return False
+
 
 class BalanceDataManager(BaseDataManager[BalanceModel]):
     async def get_balance(self, user_id: int) -> BalanceSchema:

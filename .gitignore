@@ -162,3 +162,4 @@ cython_debug/
 libs/
 .vscode/
 *.code-workspace
+media/

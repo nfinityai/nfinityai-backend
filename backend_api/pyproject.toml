@@ -30,6 +30,9 @@ starlette-admin = "^0.14.1"
 itsdangerous = "^2.2.0"
 aiocache = "^0.12.2"
 web3 = "^6.20.1"
+sqlalchemy-file = "^0.6.0"
+pillow = "^10.4.0"
+fasteners = "^0.19"
 
 
 [tool.poetry.group.dev.dependencies]
