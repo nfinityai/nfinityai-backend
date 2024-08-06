@@ -1,10 +1,13 @@
 from datetime import datetime
 
+from fastapi import Request
 from sqlmodel import SQLModel, Field, JSON, Column, Relationship
-from starlette_admin import HasOne
+from starlette_admin import HasOne, action
 from starlette_admin.contrib.sqla import ModelView
 from backend_api.admin import site
+from backend_api.backend.session import get_session
 from backend_api.models import Category
+from backend_api.services.models import ModelService, get_model_service
 
 
 class Model(SQLModel, table=True):
@@ -36,6 +39,7 @@ class ModelAdminView(ModelView):
     fields = [
         "id",
         HasOne("category", identity="category"),
+        "is_active",
         "name",
         "slug",
         "default_example",
@@ -44,10 +48,39 @@ class ModelAdminView(ModelView):
         "description",
         "run_count",
         "image_url",
-        "is_active",
         "created_at",
         "updated_at",
     ]
+    actions = [
+        "activate_models",
+        "deactivate_models",
+    ]
+
+    @action(
+        name="activate_models",
+        text="Activate Models",
+        confirmation="Are you sure you want to activate selected models?",
+    )
+    async def activate_models(
+        self,
+        request: Request,
+        pks: list[int],
+    ) -> str:
+        async for session in get_session():
+            service: ModelService = await get_model_service(session)
+            await service.update_models_status(pks, status=True)
+        return "Selected models have been activated."
+
+    @action(
+        name="deactivate_models",
+        text="Deactivate Models",
+        confirmation="Are you sure you want to activate selected models?",
+    )
+    async def deactivate_models(self, request: Request, pks: list[int]) -> str:
+        async for session in get_session():
+            service: ModelService = await get_model_service(session)
+            await service.update_models_status(pks, status=False)
+        return "Selected models have been deactivated."
 
 
 site.add_view(ModelAdminView(Model))
