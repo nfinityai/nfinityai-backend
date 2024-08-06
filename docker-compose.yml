@@ -26,6 +26,8 @@ services:
     depends_on:
       - db
       - provider_api_gateway
+    networks:
+      - webnet
 
   provider_api_gateway:
     build:
@@ -37,6 +39,8 @@ services:
       - REPLICATE_API_TOKEN=${PROVIDER_REPLICATE_API_TOKEN}
     depends_on:
       - db
+    networks:
+      - webnet
 
   db:
     image: postgres:12
@@ -48,6 +52,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pg_data:/var/lib/postgresql/data
+    networks:
+      - webnet
 
   nginx:
     image: nginx:latest
