@@ -14,6 +14,7 @@ from backend_api.models.balance import CurrencyToPayEnum
 class TokenToCoinIDEnum(str, Enum):
     ETH = "ethereum"
     USDT = "tether"
+    NFNT = "nfinityai"
 
     def __str__(self) -> str:
         return self.value
@@ -24,6 +25,8 @@ class TokenToCoinIDEnum(str, Enum):
             return TokenToCoinIDEnum.ETH
         elif currency_to_pay == CurrencyToPayEnum.USDT:
             return TokenToCoinIDEnum.USDT
+        elif currency_to_pay == CurrencyToPayEnum.NFNT:
+            return TokenToCoinIDEnum.NFNT
 
 
 class CoingeckoService:
