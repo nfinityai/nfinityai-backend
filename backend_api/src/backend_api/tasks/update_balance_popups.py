@@ -3,7 +3,10 @@ from backend_api.backend.session import get_session
 from backend_api.models.balance import TransactionType
 from backend_api.services.balance_popup import BalancePopupService
 from backend_api.backend.tasks import scheduler
-from backend_api.schemas.balance import CreateTransaction as CreateTransactionSchema, UpdateBalancePopupModel as UpdateBalancePopupSchema
+from backend_api.schemas.balance import (
+    CreateTransaction as CreateTransactionSchema,
+    UpdateBalancePopupModel as UpdateBalancePopupSchema,
+)
 from backend_api.services.web3 import get_web3_event_service
 from backend_api.services.users import get_user_service
 from backend_api.services.transaction import get_transaction_service
@@ -25,10 +28,13 @@ async def update_balance_popups():
             user = await user_service.get_user_by_id(popup.user_id)
             for event in events:
                 if event.data['from'] == user.wallet_address:
-                    updated = await service.update_balance_popup(UpdateBalancePopupSchema(**popup.model_dump()))
-                    await transaction_service.create_transaction(CreateTransactionSchema(
-                        user_id=user.id,
-                        amount=event.data['amount'] * updated.price_usd,
-                        type=TransactionType.CREDIT
-                    ))
-
+                    updated = await service.update_balance_popup(
+                        UpdateBalancePopupSchema(**popup.model_dump())
+                    )
+                    await transaction_service.create_transaction(
+                        CreateTransactionSchema(
+                            user_id=user.id,
+                            amount=event.data['amount'] * updated.price_usd,
+                            type=TransactionType.CREDIT,
+                        )
+                    )

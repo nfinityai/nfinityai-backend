@@ -43,6 +43,7 @@ class Transaction(SQLModel, table=True):
 class CurrencyToPayEnum(str, Enum):
     ETH = "ETH"
     USDT = "USDT"
+    NFNT = "NFNT"
 
     @classmethod
     def get_list(cls):
