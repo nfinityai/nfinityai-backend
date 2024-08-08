@@ -36,6 +36,8 @@ class ProviderHardwareEnum(str, Enum):
     GPU_A40_SMALL = "gpu-a40-small"
     GPU_T4 = "gpu-t4"
     GPU_V100 = "gpu-v100"
+    GPU_A40_LARGE_LARGE = "gpu-a40-large"
+    GPU_A40_LARGE_SMALL = "gpu-a40-small"
 
     def __str__(self) -> str:
         return self.value
@@ -55,4 +57,8 @@ class ProviderHardwareEnum(str, Enum):
             return cls.GPU_T4
         if "v100" in lower_text:
             return cls.GPU_V100
+        if "a40" in lower_text and "large" in lower_text:
+            return cls.GPU_A40_LARGE_LARGE
+        if "a40" in lower_text and "small" in lower_text:
+            return cls.GPU_A40_LARGE_SMALL
         raise ValueError("Invalid value for `provider_hardware` (%s)." % text)

@@ -90,20 +90,27 @@ class ReplicateModelCostExtractor:
     def extract_gpu_and_prediction_time(self, run_time_and_cost) -> CostInfoModel:
         """Extract GPU and prediction time from run_time_and_cost string using regex."""
         gpu_pattern = r"This model runs on\s*(.+?)\s*hardware"
-        prediction_time_pattern = r"complete within (\d+) seconds"
+        prediction_time_pattern = r"complete within (\d+)\s*(seconds|minutes|hours)"
 
         gpu_match = re.search(gpu_pattern, run_time_and_cost, re.IGNORECASE)
         prediction_time_match = re.search(prediction_time_pattern, run_time_and_cost)
 
         gpu = gpu_match.group(1) if gpu_match else None
         prediction_time = prediction_time_match.group(1) if prediction_time_match else None
+        prediction_unit = prediction_time_match.group(2) if prediction_time_match else None
+
+        if prediction_time and prediction_unit:
+            if prediction_unit == 'minutes':
+                prediction_time = str(int(prediction_time) * 60)
+            elif prediction_unit == 'hours':
+                prediction_time = str(int(prediction_time) * 3600)
 
         if not gpu or not prediction_time:
             logger.warning(
                 "Failed to extract GPU and prediction time", extra={"content": run_time_and_cost}
             )
 
-        return CostInfoModel(name=gpu, prediction_time=prediction_time)  # type: ignore
+        return CostInfoModel(name=gpu, prediction_time=prediction_time)
 
     async def get_run_time_and_cost(self, url):
         html_content = await self.fetch_page(url)
