@@ -53,17 +53,17 @@ class RunService:
         run_query: ModelRunQuery,
         version: str | None = None,
     ) -> ModelProviderModelRunResult:
-        if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
-            logger.error(
-                "Insufficient NFNT balance to run the model",
-                provider=self.settings.provider,
-                user=user,
-                model=model,
-                run_query=run_query,
-            )
-            raise HTTPException(
-                status_code=400, detail="Insufficient NFNT balance to run the model"
-            )
+        # if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
+        #     logger.error(
+        #         "Insufficient NFNT balance to run the model",
+        #         provider=self.settings.provider,
+        #         user=user,
+        #         model=model,
+        #         run_query=run_query,
+        #     )
+        #     raise HTTPException(
+        #         status_code=400, detail="Insufficient NFNT balance to run the model"
+        #     )
 
         if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
             logger.error(
@@ -167,14 +167,18 @@ class RunService:
             raise RunModelException("Unable to get run result") from e
 
     async def _calculate_cost(self, provider: str, model: str, elapsed_time: float | None) -> float:
-        model_costs = await self.model_provider_service.get_model_costs(provider, model)
-        if elapsed_time is None:
-            elapsed_time = model_costs.info.prediction_time
-        hardware_costs = await self.model_provider_service.get_hardware_costs(provider)
-        for hardware in filter(lambda x: x.sku == model_costs.info.sku, hardware_costs.info):
-            cost = hardware.price_per_second * elapsed_time
-            return cost
-        return self.settings.default_model_cost
+        try:
+            model_costs = await self.model_provider_service.get_model_costs(provider, model)
+            if elapsed_time is None:
+                elapsed_time = model_costs.info.prediction_time
+            hardware_costs = await self.model_provider_service.get_hardware_costs(provider)
+            for hardware in filter(lambda x: x.sku == model_costs.info.sku, hardware_costs.info):
+                cost = hardware.price_per_second * elapsed_time
+                return cost
+        except ModelProviderException:
+            return self.settings.default_model_cost
+        finally:
+            return self.settings.default_model_cost
 
     async def track_usage(
         self,
