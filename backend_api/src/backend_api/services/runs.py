@@ -53,17 +53,17 @@ class RunService:
         run_query: ModelRunQuery,
         version: str | None = None,
     ) -> ModelProviderModelRunResult:
-        # if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
-        #     logger.error(
-        #         "Insufficient NFNT balance to run the model",
-        #         provider=self.settings.provider,
-        #         user=user,
-        #         model=model,
-        #         run_query=run_query,
-        #     )
-        #     raise HTTPException(
-        #         status_code=400, detail="Insufficient NFNT balance to run the model"
-        #     )
+        if not await self.web3_service.has_sufficient_balance(user.wallet_address, 10000):
+            logger.error(
+                "Insufficient NFNT balance to run the model",
+                provider=self.settings.provider,
+                user=user,
+                model=model,
+                run_query=run_query,
+            )
+            raise HTTPException(
+                status_code=400, detail="Insufficient NFNT balance to run the model"
+            )
 
         if not await balance_service.has_sufficient_balance(user_id=user.id, required_amount=1):
             logger.error(
